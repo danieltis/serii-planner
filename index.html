@@ -21,7 +21,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--txt);font:14.5px/1.5 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    padding:calc(22px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(60px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
+    padding:calc(22px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(84px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
   html{-webkit-text-size-adjust:100%}
   .wrap{max-width:1060px;margin:0 auto}
   header{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,var(--panel2),var(--panel));padding:18px 22px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
@@ -80,7 +80,52 @@
   .pt{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;text-align:center}
   .pt .v{font-family:var(--mono);font-size:17px;font-weight:600}
   .pt .l{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px;margin-top:1px}
-  @media(max-width:760px){#opt_wrap{grid-template-columns:1fr !important}}
+
+  /* ================= navegação por secções ================= */
+  section[id^=view-]{display:none}
+  section[id^=view-].on{display:block}
+  /* duas colunas ≥900px dentro de uma vista (mass, fuel) */
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+  @media(max-width:900px){.pair{grid-template-columns:1fr}}
+  /* faixa sticky com o resumo, fora da home */
+  .sbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 13px;margin-bottom:13px}
+  .sbar .t{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--blue);font-weight:700}
+  .sbar .v{display:flex;gap:13px;font-family:var(--mono);font-size:12px;color:var(--mut)}
+  .sbar .v b{color:var(--txt);font-weight:600}
+  @media(max-width:520px){.sbar{flex-direction:column;align-items:flex-start;gap:3px;padding:8px 12px}
+    .sbar .v{gap:11px;font-size:11.5px}}
+  /* menu da home */
+  .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .mcard{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px;
+    color:var(--txt);font:inherit;cursor:pointer;min-height:80px;width:100%;-webkit-appearance:none;appearance:none}
+  .mcard:hover{border-color:var(--ok)}
+  .mcard .ic{font-size:19px;line-height:1.2}
+  .mcard .t{font-size:13.5px;font-weight:600}
+  .mcard .v{font-family:var(--mono);font-size:11px;color:var(--dim);max-width:100%;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mcard.wide{grid-column:1/-1}
+  /* sub-separadores (Takeoff / Landing) */
+  .seg{display:flex;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:4px;margin-bottom:13px}
+  .seg button{flex:1;background:none;border:1px solid transparent;border-radius:7px;color:var(--dim);
+    font:inherit;font-size:13px;font-weight:600;min-height:40px;cursor:pointer}
+  .seg button.on{background:var(--panel);border-color:var(--line);color:var(--ok)}
+  /* barra inferior */
+  .nav{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;
+    background:var(--panel2);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+  .nav button{flex:1;background:none;border:none;color:var(--mut);font:inherit;cursor:pointer;position:relative;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;padding:6px 2px}
+  .nav button .ni{font-size:17px;line-height:1}
+  .nav button .nl{font-size:10px;letter-spacing:.3px}
+  .nav button.on{color:var(--ok)}
+  .nav button .dot{position:absolute;top:8px;left:50%;margin-left:9px;width:7px;height:7px;border-radius:50%;display:none}
+  .nav button.warn .dot{display:block;background:var(--warn)}
+  .nav button.bad .dot{display:block;background:var(--bad)}
+  @media(max-width:899px){#pdf_btn{display:none}}
+  /* fora da home, em telemóvel o #sbar já mostra o título: esconde o header */
+  @media(max-width:899px){body.sub header{display:none}}
+  @media(min-width:901px){#pdf_btn2{display:none}}
   /* ---- folha de briefing para PDF/impressão ---- */
   @media print{
     :root{--bg:#fff;--panel:#fff;--panel2:#f4f6f8;--line:#c9d2da;--track:#e4e9ee;
@@ -88,11 +133,17 @@
     body{background:#fff;color:#111820;padding:0;font-size:11.5px}
     .wrap{max-width:100%}
     header{border:none;background:none;padding:0 0 6px;border-bottom:2px solid #111820;border-radius:0}
-    #pdf_btn{display:none}
-    .cols{display:none}                  /* esconde os inputs */
+    body.sub header{display:flex !important}
+    #pdf_btn,#pdf_btn2{display:none !important}
+    .cols,.inputs{display:none !important}   /* esconde os inputs */
+    .nav,.sbar,.menu,.seg{display:none !important}
+    section[id^=view-]{display:block !important}
+    #perf_to,#perf_ld{display:block !important}
+    .pair{display:block}
     #print_head{display:block !important;font-family:var(--mono);font-size:11px;color:#4a5a68;
       padding:6px 0 10px;border-bottom:1px solid #c9d2da;margin-bottom:10px}
     .card,.tile,.pt{border:1px solid #c9d2da;background:#fff;box-shadow:none;break-inside:avoid}
+    .card{margin-bottom:10px}
     .alert{background:#fff;border:1px solid #c9d2da;border-left-width:4px}
     .tiles{grid-template-columns:repeat(4,1fr)}
     .tile .v{font-size:20px}
@@ -116,15 +167,51 @@
     <p>Cessna Citation 500 · 2×JT15D-1 · calibrated performance model (FL290 ★ flight-verified)</p>
   </div>
   <div style="display:flex;align-items:center;gap:14px">
-    <p id="hdr_route" style="font-family:var(--mono);font-size:15px;color:var(--txt)">— → —</p>
     <button id="pdf_btn" style="background:transparent;color:var(--ok);border:1px solid var(--ok);border-radius:8px;padding:7px 14px;font-weight:700;font-size:12.5px;cursor:pointer">🖨 Export PDF</button>
   </div>
 </header>
 <div id="print_head" style="display:none"></div>
 
-<div class="cols">
-  <!-- ROTA -->
-  <div class="card">
+<!-- faixa compacta sticky (todas as vistas exceto a home) -->
+<div class="sbar" id="sbar" style="display:none">
+  <span class="t" id="s_title">—</span>
+  <span class="v">
+    <span>Time <b id="s_time">–</b></span>
+    <span>Block <b id="s_fuel">–</b></span>
+    <span>Cost <b id="s_cost">–</b></span>
+  </span>
+</div>
+
+<!-- ===================== HOME ===================== -->
+<section id="view-home">
+  <p id="hdr_route" style="font-family:var(--mono);font-size:17px;color:var(--txt);margin-bottom:12px">— → —</p>
+
+  <div class="tiles">
+    <div class="tile"><div class="l">Flight time</div><div class="v" id="t_time">–</div><div class="s" id="t_time2">block –</div></div>
+    <div class="tile"><div class="l">Route distance</div><div class="v" id="t_dist">–</div><div class="s" id="t_dist2">GC – NM</div></div>
+    <div class="tile"><div class="l">Block fuel</div><div class="v" id="t_fuel">–</div><div class="s" id="t_fuel2">– lb</div></div>
+    <div class="tile"><div class="l">Fuel cost</div><div class="v" id="t_cost">–</div><div class="s" id="t_cost2">– €/NM</div></div>
+  </div>
+
+  <div class="alerts" id="alerts"></div>
+
+  <div class="menu">
+    <button type="button" class="mcard" data-go="route">
+      <span class="ic">🧭</span><span class="t">Route</span><span class="v" id="mv_route">–</span></button>
+    <button type="button" class="mcard" data-go="mass">
+      <span class="ic">⚖️</span><span class="t">Mass</span><span class="v" id="mv_mass">–</span></button>
+    <button type="button" class="mcard" data-go="fuel">
+      <span class="ic">⛽</span><span class="t">Fuel</span><span class="v" id="mv_fuel">–</span></button>
+    <button type="button" class="mcard" data-go="perf">
+      <span class="ic">🛫</span><span class="t">Performance</span><span class="v" id="mv_perf">–</span></button>
+    <button type="button" class="mcard wide" data-go="plan">
+      <span class="ic">📋</span><span class="t">Flight plan</span><span class="v">profile · M&amp;B · PDF</span></button>
+  </div>
+</section>
+
+<!-- ===================== ROUTE ===================== -->
+<section id="view-route">
+  <div class="card inputs">
     <h2><span class="n">1</span>Route</h2>
     <div class="r2">
       <div class="f"><label>Origin (ICAO)</label><input id="dep" list="apts" value="LPCO" maxlength="4" style="text-transform:uppercase"></div>
@@ -142,137 +229,141 @@
       <div class="f"><label>Average wind (kt)</label><input type="number" id="wind" value="0" step="5"><span class="sub">+tail · −head</span></div>
     </div>
   </div>
+</section>
 
-  <!-- PESOS -->
-  <div class="card">
-    <h2><span class="n">2</span>Mass &amp; limits <span style="color:var(--dim);font-size:10px;text-transform:none">— inputs in kg</span></h2>
-    <div class="f"><label>Basic empty weight (kg)</label><input type="number" id="bew" value="3032" step="5"><span class="sub" id="lb_bew">≈ 6,684 lb · typical CE-500, use your weighing report</span></div>
-    <div class="r2">
-      <div class="f"><label>Crew</label><input type="number" id="crew" value="2" min="1" max="2"></div>
-      <div class="f"><label>Weight per crew (kg)</label><input type="number" id="crew_w" value="86" step="1"><span class="sub" id="lb_crew_w"></span></div>
+<!-- ===================== FUEL & CRUISE ===================== -->
+<section id="view-fuel">
+  <div class="pair">
+    <div class="card inputs">
+      <h2><span class="n">3</span>Fuel &amp; cruise</h2>
+      <div class="f"><label>Cruise mode</label>
+        <select id="reg">
+          <option value="lr" selected>Long-range</option>
+          <option value="hs">High-speed</option>
+          <option value="ec">Economy (L/h)</option>
+        </select>
+      </div>
+      <div class="f"><label>Flight level — <span id="fl_v" style="color:var(--ok);font-family:var(--mono)">FL350</span></label>
+        <input type="range" id="fl" value="350" min="100" max="410" step="10"></div>
+      <div class="f"><label>Fuel flow — <span id="ff_v" style="color:var(--ok);font-family:var(--mono)">–</span></label>
+        <input type="range" id="ec_lh" value="400" min="250" max="900" step="10">
+        <span class="sub" id="ff_sub">drag to set a FF (switches mode to Economy)</span></div>
+      <div class="r2">
+        <div class="f"><label>Final reserve (min)</label><input type="number" id="resv" value="45" min="0" step="5"></div>
+        <div class="f"><label>Alternate (NM)</label><input type="number" id="altn" value="0" min="0" step="10"></div>
+      </div>
+      <div class="f"><label>Extra fuel — <span id="xt_v" style="color:var(--ok);font-family:var(--mono)">+0 lb</span></label>
+        <input type="range" id="xtra" value="0" min="0" max="1000" step="10">
+        <span class="sub" id="xt_sub">from route min fuel to MTOW / full tanks</span></div>
+      <div class="r2">
+        <div class="f"><label>Taxi/APU (kg)</label><input type="number" id="taxi" value="91" step="5"><span class="sub" id="lb_taxi"></span></div>
+        <div class="f"><label>Fuel capacity (kg)</label><input type="number" id="cap" value="1715"><span class="sub" id="lb_cap"></span></div>
+      </div>
+      <div class="f"><label>Jet A-1 (€/L)</label><input type="number" id="ppl" value="1.30" step="0.05"></div>
     </div>
-    <div class="r2">
-      <div class="f"><label>Passengers (max 6)</label><input type="number" id="pax" value="2" min="0" max="8"></div>
-      <div class="f"><label>Weight per pax (kg)</label><input type="number" id="pax_w" value="84" step="1"><span class="sub" id="lb_pax_w"></span></div>
-    </div>
-    <div class="f"><label>Baggage (kg)</label><input type="number" id="bags" value="27" step="5"><span class="sub" id="lb_bags"></span></div>
-    <div class="r2">
-      <div class="f"><label>MTOW (kg)</label><input type="number" id="mtow" value="5375"><span class="sub" id="lb_mtow"></span></div>
-      <div class="f"><label>MLW (kg)</label><input type="number" id="mlw" value="5148"><span class="sub" id="lb_mlw"></span></div>
-    </div>
-  </div>
 
-  <!-- FUEL & CRUZEIRO -->
-  <div class="card">
-    <h2><span class="n">3</span>Fuel &amp; cruise</h2>
-    <div class="f"><label>Cruise mode</label>
-      <select id="reg">
-        <option value="lr" selected>Long-range</option>
-        <option value="hs">High-speed</option>
-        <option value="ec">Economy (L/h)</option>
-      </select>
-    </div>
-    <div class="f"><label>Flight level — <span id="fl_v" style="color:var(--ok);font-family:var(--mono)">FL350</span></label>
-      <input type="range" id="fl" value="350" min="100" max="410" step="10"></div>
-    <div class="f"><label>Fuel flow — <span id="ff_v" style="color:var(--ok);font-family:var(--mono)">–</span></label>
-      <input type="range" id="ec_lh" value="400" min="250" max="900" step="10">
-      <span class="sub" id="ff_sub">drag to set a FF (switches mode to Economy)</span></div>
-    <div class="r2">
-      <div class="f"><label>Final reserve (min)</label><input type="number" id="resv" value="45" min="0" step="5"></div>
-      <div class="f"><label>Alternate (NM)</label><input type="number" id="altn" value="0" min="0" step="10"></div>
-    </div>
-    <div class="f"><label>Extra fuel — <span id="xt_v" style="color:var(--ok);font-family:var(--mono)">+0 lb</span></label>
-      <input type="range" id="xtra" value="0" min="0" max="1000" step="10">
-      <span class="sub" id="xt_sub">from route min fuel to MTOW / full tanks</span></div>
-    <div class="r2">
-      <div class="f"><label>Taxi/APU (kg)</label><input type="number" id="taxi" value="91" step="5"><span class="sub" id="lb_taxi"></span></div>
-      <div class="f"><label>Fuel capacity (kg)</label><input type="number" id="cap" value="1715"><span class="sub" id="lb_cap"></span></div>
-    </div>
-    <div class="f"><label>Jet A-1 (€/L)</label><input type="number" id="ppl" value="1.30" step="0.05"></div>
-  </div>
-</div>
-
-<div class="res">
-  <div class="alerts" id="alerts"></div>
-
-  <div class="tiles">
-    <div class="tile"><div class="l">Flight time</div><div class="v" id="t_time">–</div><div class="s" id="t_time2">block –</div></div>
-    <div class="tile"><div class="l">Route distance</div><div class="v" id="t_dist">–</div><div class="s" id="t_dist2">GC – NM</div></div>
-    <div class="tile"><div class="l">Block fuel</div><div class="v" id="t_fuel">–</div><div class="s" id="t_fuel2">– lb</div></div>
-    <div class="tile"><div class="l">Fuel cost</div><div class="v" id="t_cost">–</div><div class="s" id="t_cost2">– €/NM</div></div>
-  </div>
-
-  <div class="card" style="margin-bottom:14px">
-    <h2>Altitude &amp; power setting optimizer <span style="color:var(--dim);font-size:10px">minimum fuel for this route (climb + cruise + descent)</span></h2>
-    <div style="display:grid;grid-template-columns:280px 1fr;gap:18px" id="opt_wrap">
-      <div>
-        <div class="pgrid" style="grid-template-columns:1fr 1fr;margin-top:0">
-          <div class="pt"><div class="v" id="o_fl" style="color:var(--ok)">–</div><div class="l">Optimum FL</div></div>
-          <div class="pt"><div class="v" id="o_ff">–</div><div class="l">FF L/h</div></div>
-          <div class="pt"><div class="v" id="o_tas">–</div><div class="l">TAS kt</div></div>
-          <div class="pt"><div class="v" id="o_n1">–</div><div class="l">Est. N1 %</div></div>
-          <div class="pt"><div class="v" id="o_fuel">–</div><div class="l">Trip fuel kg</div></div>
-          <div class="pt"><div class="v" id="o_dt">–</div><div class="l">Time</div></div>
+    <div class="card">
+      <h2>Altitude &amp; power setting optimizer <span style="color:var(--dim);font-size:10px">minimum fuel for this route (climb + cruise + descent)</span></h2>
+      <div style="display:grid;grid-template-columns:1fr;gap:14px" id="opt_wrap">
+        <div>
+          <div class="pgrid" style="grid-template-columns:1fr 1fr;margin-top:0">
+            <div class="pt"><div class="v" id="o_fl" style="color:var(--ok)">–</div><div class="l">Optimum FL</div></div>
+            <div class="pt"><div class="v" id="o_ff">–</div><div class="l">FF L/h</div></div>
+            <div class="pt"><div class="v" id="o_tas">–</div><div class="l">TAS kt</div></div>
+            <div class="pt"><div class="v" id="o_n1">–</div><div class="l">Est. N1 %</div></div>
+            <div class="pt"><div class="v" id="o_fuel">–</div><div class="l">Trip fuel kg</div></div>
+            <div class="pt"><div class="v" id="o_dt">–</div><div class="l">Time</div></div>
+          </div>
+          <div class="note" id="o_save" style="margin:10px 0 0;padding:8px 12px;font-size:12px">–</div>
+          <button id="o_apply" style="margin-top:10px;width:100%;background:var(--ok);color:#0c1a13;border:none;border-radius:8px;padding:9px;font-weight:700;font-size:13px;cursor:pointer">Apply to plan</button>
         </div>
-        <div class="note" id="o_save" style="margin:10px 0 0;padding:8px 12px;font-size:12px">–</div>
-        <button id="o_apply" style="margin-top:10px;width:100%;background:var(--ok);color:#0c1a13;border:none;border-radius:8px;padding:9px;font-weight:700;font-size:13px;cursor:pointer">Apply to plan</button>
+        <div id="o_bars" style="display:flex;flex-direction:column;gap:3px;justify-content:center"></div>
       </div>
-      <div id="o_bars" style="display:flex;flex-direction:column;gap:3px;justify-content:center"></div>
     </div>
   </div>
+</section>
 
-  <div class="two" style="margin-bottom:14px">
-    <div class="card">
-      <h2>Departure performance — takeoff <span style="color:var(--dim);font-size:10px" id="p_dep_w"></span></h2>
-      <div class="r2">
-        <div class="f"><label>Elevation (ft)</label><input type="number" id="d_elev" value="587" step="10"></div>
-        <div class="f"><label>Runway (m)</label><input type="number" id="d_rwy" value="920" step="10"></div>
-      </div>
-      <div class="r2">
-        <div class="f"><label>OAT (°C)</label><input type="number" id="d_oat" value="15" step="1"></div>
-        <div class="f"><label>QNH (hPa)</label><input type="number" id="d_qnh" value="1013" step="1"></div>
-      </div>
-      <div class="f"><label>Headwind (kt)</label><input type="number" id="d_hw" value="0" min="0" step="1"></div>
-      <div class="pgrid">
-        <div class="pt"><div class="v" id="p_v1">–</div><div class="l">V1 est.</div></div>
-        <div class="pt"><div class="v" id="p_vr">–</div><div class="l">Vr est.</div></div>
-        <div class="pt"><div class="v" id="p_v2">–</div><div class="l">V2 est.</div></div>
-        <div class="pt"><div class="v" id="p_gr">–</div><div class="l">Grd roll m</div></div>
-        <div class="pt"><div class="v" id="p_d35">–</div><div class="l">Dist 35 ft m</div></div>
-        <div class="pt"><div class="v" id="p_bfl">–</div><div class="l">BFL m</div></div>
-      </div>
-      <div class="note" id="p_tov" style="background:#22303a;border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:var(--dim);margin-top:10px">–</div>
-    </div>
-    <div class="card">
-      <h2>Destination performance — landing <span style="color:var(--dim);font-size:10px" id="p_arr_w"></span></h2>
-      <div class="r2">
-        <div class="f"><label>Elevation (ft)</label><input type="number" id="a_elev" value="24" step="10"></div>
-        <div class="f"><label>Runway (m)</label><input type="number" id="a_rwy" value="2490" step="10"></div>
-      </div>
-      <div class="r2">
-        <div class="f"><label>OAT (°C)</label><input type="number" id="a_oat" value="15" step="1"></div>
-        <div class="f"><label>QNH (hPa)</label><input type="number" id="a_qnh" value="1013" step="1"></div>
-      </div>
-      <div class="f"><label>Headwind (kt)</label><input type="number" id="a_hw" value="0" min="0" step="1"></div>
-      <div class="pgrid">
-        <div class="pt"><div class="v" id="p_vref">–</div><div class="l">Vref</div></div>
-        <div class="pt"><div class="v" id="p_vapp">–</div><div class="l">Vapp</div></div>
-        <div class="pt"><div class="v" id="p_da">–</div><div class="l">Dens alt ft</div></div>
-        <div class="pt"><div class="v" id="p_lgr">–</div><div class="l">Grd roll m</div></div>
-        <div class="pt"><div class="v" id="p_l50">–</div><div class="l">Dist 50 ft m</div></div>
-        <div class="pt"><div class="v" id="p_l60">–</div><div class="l">×1,67 m</div></div>
-      </div>
-      <div class="note" id="p_ldv" style="background:#22303a;border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:var(--dim);margin-top:10px">–</div>
-    </div>
+<!-- ===================== PERFORMANCE ===================== -->
+<section id="view-perf">
+  <div class="seg">
+    <button type="button" id="pt_to" class="on">Takeoff</button>
+    <button type="button" id="pt_ld">Landing</button>
   </div>
+  <div class="card" id="perf_to">
+    <h2>Departure performance — takeoff <span style="color:var(--dim);font-size:10px" id="p_dep_w"></span></h2>
+    <div class="r2">
+      <div class="f"><label>Elevation (ft)</label><input type="number" id="d_elev" value="587" step="10"></div>
+      <div class="f"><label>Runway (m)</label><input type="number" id="d_rwy" value="920" step="10"></div>
+    </div>
+    <div class="r2">
+      <div class="f"><label>OAT (°C)</label><input type="number" id="d_oat" value="15" step="1"></div>
+      <div class="f"><label>QNH (hPa)</label><input type="number" id="d_qnh" value="1013" step="1"></div>
+    </div>
+    <div class="f"><label>Headwind (kt)</label><input type="number" id="d_hw" value="0" min="0" step="1"></div>
+    <div class="pgrid">
+      <div class="pt"><div class="v" id="p_v1">–</div><div class="l">V1 est.</div></div>
+      <div class="pt"><div class="v" id="p_vr">–</div><div class="l">Vr est.</div></div>
+      <div class="pt"><div class="v" id="p_v2">–</div><div class="l">V2 est.</div></div>
+      <div class="pt"><div class="v" id="p_gr">–</div><div class="l">Grd roll m</div></div>
+      <div class="pt"><div class="v" id="p_d35">–</div><div class="l">Dist 35 ft m</div></div>
+      <div class="pt"><div class="v" id="p_bfl">–</div><div class="l">BFL m</div></div>
+    </div>
+    <div class="note" id="p_tov" style="background:#22303a;border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:var(--dim);margin-top:10px">–</div>
+  </div>
+  <div class="card" id="perf_ld" style="display:none">
+    <h2>Destination performance — landing <span style="color:var(--dim);font-size:10px" id="p_arr_w"></span></h2>
+    <div class="r2">
+      <div class="f"><label>Elevation (ft)</label><input type="number" id="a_elev" value="24" step="10"></div>
+      <div class="f"><label>Runway (m)</label><input type="number" id="a_rwy" value="2490" step="10"></div>
+    </div>
+    <div class="r2">
+      <div class="f"><label>OAT (°C)</label><input type="number" id="a_oat" value="15" step="1"></div>
+      <div class="f"><label>QNH (hPa)</label><input type="number" id="a_qnh" value="1013" step="1"></div>
+    </div>
+    <div class="f"><label>Headwind (kt)</label><input type="number" id="a_hw" value="0" min="0" step="1"></div>
+    <div class="pgrid">
+      <div class="pt"><div class="v" id="p_vref">–</div><div class="l">Vref</div></div>
+      <div class="pt"><div class="v" id="p_vapp">–</div><div class="l">Vapp</div></div>
+      <div class="pt"><div class="v" id="p_da">–</div><div class="l">Dens alt ft</div></div>
+      <div class="pt"><div class="v" id="p_lgr">–</div><div class="l">Grd roll m</div></div>
+      <div class="pt"><div class="v" id="p_l50">–</div><div class="l">Dist 50 ft m</div></div>
+      <div class="pt"><div class="v" id="p_l60">–</div><div class="l">×1,67 m</div></div>
+    </div>
+    <div class="note" id="p_ldv" style="background:#22303a;border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:var(--dim);margin-top:10px">–</div>
+  </div>
+</section>
 
-  <div class="two">
-    <div class="card">
-      <h2>Flight profile</h2>
-      <table id="phases">
-        <tr><th>Phase</th><th>Time</th><th>Dist NM</th><th>Fuel kg</th><th>Fuel lb</th><th>Fuel L</th></tr>
-      </table>
-      <div class="spd" id="spd"></div>
+<!-- ===================== FLIGHT PLAN ===================== -->
+<section id="view-plan">
+  <div class="card">
+    <h2>Flight profile</h2>
+    <table id="phases">
+      <tr><th>Phase</th><th>Time</th><th>Dist NM</th><th>Fuel kg</th><th>Fuel lb</th><th>Fuel L</th></tr>
+    </table>
+    <div class="spd" id="spd"></div>
+  </div>
+  <button id="pdf_btn2" style="margin-top:14px;width:100%;background:transparent;color:var(--ok);border:1px solid var(--ok);border-radius:8px;padding:11px;font-weight:700;font-size:13.5px;cursor:pointer">🖨 Export PDF</button>
+</section>
+
+<!-- ===================== MASS ===================== -->
+<section id="view-mass">
+  <div class="pair">
+    <div class="card inputs">
+      <h2><span class="n">2</span>Mass &amp; limits <span style="color:var(--dim);font-size:10px;text-transform:none">— inputs in kg</span></h2>
+      <div class="f"><label>Basic empty weight (kg)</label><input type="number" id="bew" value="3032" step="5"><span class="sub" id="lb_bew">≈ 6,684 lb · typical CE-500, use your weighing report</span></div>
+      <div class="r2">
+        <div class="f"><label>Crew</label><input type="number" id="crew" value="2" min="1" max="2"></div>
+        <div class="f"><label>Weight per crew (kg)</label><input type="number" id="crew_w" value="86" step="1"><span class="sub" id="lb_crew_w"></span></div>
+      </div>
+      <div class="r2">
+        <div class="f"><label>Passengers (max 6)</label><input type="number" id="pax" value="2" min="0" max="8"></div>
+        <div class="f"><label>Weight per pax (kg)</label><input type="number" id="pax_w" value="84" step="1"><span class="sub" id="lb_pax_w"></span></div>
+      </div>
+      <div class="f"><label>Baggage (kg)</label><input type="number" id="bags" value="27" step="5"><span class="sub" id="lb_bags"></span></div>
+      <div class="r2">
+        <div class="f"><label>MTOW (kg)</label><input type="number" id="mtow" value="5375"><span class="sub" id="lb_mtow"></span></div>
+        <div class="f"><label>MLW (kg)</label><input type="number" id="mlw" value="5148"><span class="sub" id="lb_mlw"></span></div>
+      </div>
     </div>
     <div class="card">
       <h2>Mass &amp; balance — weights</h2>
@@ -283,13 +374,23 @@
       <table id="wtbl"></table>
     </div>
   </div>
-</div>
+</section>
 
 <footer>
   SE-RII Flight Planner · Citation 500 (JT15D-1) · Great-circle distance + route factor · Typical climb/descent profiles; cruise from a model calibrated on the FL290 HS point (flight-verified) and FL350 LR · Weights: typical BEW 6,684 lb, MTOW 11,850 lb, MLW 11,350 lb, fuel 3,780 lb / 564 US gal · Planning tool — AFM and official navigation data prevail.
 </footer>
 
 </div>
+
+<nav class="nav" id="navbar">
+  <button type="button" data-view="home"><span class="ni">🏠</span><span class="nl">Home</span><span class="dot"></span></button>
+  <button type="button" data-view="route"><span class="ni">🧭</span><span class="nl">Route</span><span class="dot"></span></button>
+  <button type="button" data-view="mass"><span class="ni">⚖️</span><span class="nl">Mass</span><span class="dot"></span></button>
+  <button type="button" data-view="fuel"><span class="ni">⛽</span><span class="nl">Fuel</span><span class="dot"></span></button>
+  <button type="button" data-view="perf"><span class="ni">🛫</span><span class="nl">Perf</span><span class="dot"></span></button>
+  <button type="button" data-view="plan"><span class="ni">📋</span><span class="nl">Plan</span><span class="dot"></span></button>
+</nav>
+
 <script>
 // ================= DADOS =================
 // [nome, lat, lon, elevação ft, pista mais longa m] — elev/pista aproximados: confirmar no AIP
@@ -524,7 +625,7 @@ function plan(){
   const alerts=[];
   const dep=getPt('dep','dep_ll','dep_n','d'), arr=getPt('arr','arr_ll','arr_n','a');
   const hdr=document.getElementById('hdr_route');
-  if(!dep||!arr){hdr.textContent='— → —';document.getElementById('alerts').innerHTML='<div class="alert warn">⚠ Set origin and destination (ICAO from the list or manual lat,lon).</div>';return;}
+  if(!dep||!arr){hdr.textContent='— → —';document.getElementById('alerts').innerHTML='<div class="alert warn">⚠ Set origin and destination (ICAO from the list or manual lat,lon).</div>';updateBadges([['warn','origin and destination']]);return;}
   hdr.textContent=dep[2]+' → '+arr[2];
   const gc=gcNM(dep,arr);
   const rf=+document.getElementById('rf').value||0;
@@ -611,6 +712,14 @@ function plan(){
   const ppl=+document.getElementById('ppl').value||0, cost=burn*LB2L*ppl;
   document.getElementById('t_cost').textContent=ppl>0?Math.round(cost).toLocaleString('pt')+' €':'–';
   document.getElementById('t_cost2').textContent=ppl>0&&route>0?Math.round(burn*LB2L)+' L queimados · '+(cost/route).toFixed(2)+' €/NM':'';
+  // resumo da faixa sticky + valores-chave do menu da home (só apresentação)
+  document.getElementById('s_time').textContent=fmtT(fT);
+  document.getElementById('s_fuel').textContent=fmtKG(block)+' kg';
+  document.getElementById('s_cost').textContent=ppl>0?Math.round(cost).toLocaleString('pt')+' €':'–';
+  document.getElementById('mv_route').textContent=dep[2]+' → '+arr[2]+' · '+Math.round(route)+' NM';
+  document.getElementById('mv_mass').textContent='TOW '+fmtKG(tow)+' kg';
+  document.getElementById('mv_fuel').textContent='FL'+flUsed+' · '+regName;
+  document.getElementById('mv_perf').textContent='BFL '+document.getElementById('p_bfl').textContent+' m / LDR '+document.getElementById('p_l60').textContent+' m';
   const tb=document.getElementById('phases');
   while(tb.rows.length>1)tb.deleteRow(1);
   const rr=(n,t,d,f,cls)=>{const r=tb.insertRow();if(cls)r.className=cls;
@@ -644,10 +753,80 @@ function plan(){
   render();
   function render(){
     document.getElementById('alerts').innerHTML=alerts.map(a=>'<div class="alert '+a[0]+'">'+a[1]+'</div>').join('');
+    updateBadges(alerts);
   }
 }
-document.getElementById('ec_lh').addEventListener('input',()=>{document.getElementById('reg').value='ec';});
-document.getElementById('pdf_btn').addEventListener('click',()=>{
+
+// ================= NAVEGAÇÃO (apresentação — não recalcula nada) =================
+const VIEWS=['home','route','mass','fuel','perf','plan'];
+const VTITLE={home:'Home',route:'Route',mass:'Mass & limits',fuel:'Fuel & cruise',perf:'Performance',plan:'Flight plan'};
+
+// mapeia o texto de um alerta à secção onde o utilizador o resolve
+function tagAlert(text){
+  const s=String(text||'');
+  if(/passenger|MTOW|MLW|landing weight/i.test(s))return 'mass';
+  if(/block fuel|capacity|L\/h|thrust-limited|level flight|too short|profile adjusted/i.test(s))return 'fuel';
+  if(/headwind|GS |origin|destination|wind/i.test(s))return 'route';
+  return null;
+}
+function updateBadges(list){
+  const st={route:0,mass:0,fuel:0,perf:0}; // 0 nenhum · 1 warn · 2 bad
+  (list||[]).forEach(a=>{
+    if(a[0]!=='warn'&&a[0]!=='bad')return;
+    const sec=a[2]||tagAlert(a[1]);
+    if(!sec||!(sec in st))return;
+    const lvl=a[0]==='bad'?2:1;
+    if(lvl>st[sec])st[sec]=lvl;
+  });
+  ['p_tov','p_ldv'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const t=(el.textContent||'').trim();
+    if(t.indexOf('✗')===0)st.perf=2;
+    else if(t.indexOf('⚠')===0&&st.perf<1)st.perf=1;
+  });
+  Object.keys(st).forEach(k=>{
+    const b=document.querySelector('.nav button[data-view="'+k+'"]');
+    if(!b)return;
+    b.classList.remove('warn','bad');
+    if(st[k]===2)b.classList.add('bad');
+    else if(st[k]===1)b.classList.add('warn');
+  });
+}
+function showView(v){
+  if(VIEWS.indexOf(v)<0)v='home';
+  VIEWS.forEach(k=>{const s=document.getElementById('view-'+k);if(s)s.classList.toggle('on',k===v);});
+  document.querySelectorAll('.nav button[data-view]').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
+  document.body.classList.toggle('sub',v!=='home');
+  const sb=document.getElementById('sbar');
+  if(v==='home')sb.style.display='none';
+  else{sb.style.display='';document.getElementById('s_title').textContent=VTITLE[v]||'';}
+  try{localStorage.setItem('serii.view',v);}catch(e){}
+}
+function routeFromHash(scroll){
+  const h=(location.hash||'').replace('#','');
+  showView(VIEWS.indexOf(h)>=0?h:'home');
+  if(scroll)window.scrollTo(0,0);
+}
+function goView(v){
+  if(('#'+v)===location.hash)routeFromHash(true);
+  else location.hash='#'+v;
+}
+window.addEventListener('hashchange',()=>routeFromHash(true));
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>goView(b.dataset.go)));
+document.querySelectorAll('.nav button[data-view]').forEach(b=>b.addEventListener('click',()=>goView(b.dataset.view)));
+
+// sub-separadores da performance
+function showPerf(t){
+  document.getElementById('perf_to').style.display=(t==='to')?'':'none';
+  document.getElementById('perf_ld').style.display=(t==='ld')?'':'none';
+  document.getElementById('pt_to').classList.toggle('on',t==='to');
+  document.getElementById('pt_ld').classList.toggle('on',t==='ld');
+}
+document.getElementById('pt_to').addEventListener('click',()=>showPerf('to'));
+document.getElementById('pt_ld').addEventListener('click',()=>showPerf('ld'));
+showPerf('to');
+
+function printPlan(){
   const g=id=>document.getElementById(id).value;
   const now=new Date();
   document.getElementById('print_head').innerHTML=
@@ -655,7 +834,10 @@ document.getElementById('pdf_btn').addEventListener('click',()=>{
    ' &nbsp;|&nbsp; Route factor '+g('rf')+' % · Wind '+g('wind')+' kt · '+document.getElementById('fl_v').textContent+' · '+document.getElementById('reg').selectedOptions[0].text+
    ' &nbsp;|&nbsp; '+g('crew')+' crew + '+g('pax')+' pax · BEW '+g('bew')+' kg &nbsp;|&nbsp; Planning values — the AFM prevails';
   window.print();
-});
+}
+document.getElementById('ec_lh').addEventListener('input',()=>{document.getElementById('reg').value='ec';});
+document.getElementById('pdf_btn').addEventListener('click',printPlan);
+document.getElementById('pdf_btn2').addEventListener('click',printPlan);
 document.getElementById('o_apply').addEventListener('click',()=>{
   const fl=document.getElementById('o_fl').textContent.replace('FL','');
   const ff=document.getElementById('o_ff').textContent;
@@ -667,6 +849,15 @@ document.getElementById('o_apply').addEventListener('click',()=>{
 });
 document.querySelectorAll('input,select').forEach(el=>{el.addEventListener('input',plan);el.addEventListener('change',plan);});
 plan();
+
+// vista inicial: hash → localStorage → home
+(function(){
+  let v=(location.hash||'').replace('#','');
+  if(VIEWS.indexOf(v)<0){try{v=localStorage.getItem('serii.view')||'home';}catch(e){v='home';}}
+  if(VIEWS.indexOf(v)<0)v='home';
+  if(v!=='home'&&location.hash!=='#'+v)location.hash='#'+v;
+  showView(v);
+})();
 </script>
 <script>
 if('serviceWorker' in navigator){
