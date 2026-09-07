@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#101418">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SE-RII">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>SE-RII Flight Planner · Citation 500</title>
+<style>
+  :root{
+    --bg:#101418; --panel:#181f26; --panel2:#1e2730; --line:#2c3947; --track:#232f3b;
+    --txt:#e8edf2; --dim:#93a4b3; --mut:#5f7183;
+    --ok:#48d597; --warn:#f2b84b; --bad:#f26d6d; --blue:#5db3f0;
+    --mono:"JetBrains Mono","SF Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);font:14.5px/1.5 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:calc(22px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(60px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
+  html{-webkit-text-size-adjust:100%}
+  .wrap{max-width:1060px;margin:0 auto}
+  header{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,var(--panel2),var(--panel));padding:18px 22px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  header h1{font-size:19px;letter-spacing:.4px}
+  header h1 span{color:var(--ok)}
+  header p{color:var(--dim);font-size:12px}
+  .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:900px){.cols{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .card h2{font-size:12px;text-transform:uppercase;letter-spacing:1.4px;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .card h2 .n{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);color:var(--dim);font-size:11px}
+  .f{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}
+  .f label{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--dim)}
+  .f input,.f select{background:var(--bg);border:1px solid var(--line);border-radius:7px;color:var(--txt);font-family:var(--mono);font-size:16px;padding:9px 10px;width:100%;min-height:42px}
+  @media(pointer:coarse){input[type=range]::-webkit-slider-thumb{width:26px;height:26px;margin-top:-10px}input[type=range]{height:34px}button{min-height:44px}}
+  .f input:focus,.f select:focus{outline:none;border-color:var(--ok)}
+  .f .sub{font-size:11px;color:var(--mut)}
+  .r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .apname{font-size:11.5px;color:var(--ok);font-family:var(--mono);min-height:15px;margin-top:-6px;margin-bottom:8px}
+  /* results */
+  .res{margin-top:16px}
+  .alerts{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+  .alert{border-radius:8px;padding:9px 13px;font-size:13.5px;border-left:3px solid;background:var(--panel)}
+  .alert.ok{border-color:var(--ok)} .alert.warn{border-color:var(--warn)} .alert.bad{border-color:var(--bad)}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .tile .l{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--dim)}
+  .tile .v{font-size:27px;font-weight:600;margin-top:2px}
+  .tile .s{font-size:11.5px;color:var(--mut);margin-top:2px;font-family:var(--mono)}
+  .two{display:grid;grid-template-columns:1.05fr .95fr;gap:14px}
+  @media(max-width:900px){.two{grid-template-columns:1fr}}
+  /* meters */
+  .meter{margin-bottom:13px}
+  .meter .head{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px}
+  .meter .head b{font-family:var(--mono);font-weight:600}
+  .meter .head span{color:var(--dim)}
+  .bar{height:14px;background:var(--track);border-radius:7px;position:relative;overflow:hidden}
+  .bar .fill{height:100%;border-radius:7px 0 0 7px;transition:width .25s}
+  .bar .lim{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--txt);opacity:.55}
+  .meter .foot{font-size:11px;color:var(--mut);margin-top:3px;font-family:var(--mono)}
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12.5px}
+  th{color:var(--dim);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line)}
+  th:first-child{text-align:left}
+  td{padding:6px 8px;text-align:right;border-bottom:1px solid #212b35;font-variant-numeric:tabular-nums}
+  td:first-child{text-align:left;color:var(--dim)}
+  tr.tot td{border-top:1px solid var(--line);border-bottom:none;font-weight:700}
+  .spd{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:12.5px;color:var(--dim);margin-top:10px}
+  .spd b{color:var(--txt)}
+  footer{margin-top:26px;color:var(--mut);font-size:11px;border-top:1px solid var(--line);padding-top:10px}
+  input[type=range]{-webkit-appearance:none;appearance:none;height:26px;background:transparent;padding:0;border:none}
+  input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--track)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--ok);margin-top:-6px;border:2px solid var(--bg)}
+  input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--track)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--ok);border:2px solid var(--bg)}
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px;margin-top:10px}
+  .pt{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;text-align:center}
+  .pt .v{font-family:var(--mono);font-size:17px;font-weight:600}
+  .pt .l{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px;margin-top:1px}
+  @media(max-width:760px){#opt_wrap{grid-template-columns:1fr !important}}
+  /* ---- folha de briefing para PDF/impressão ---- */
+  @media print{
+    :root{--bg:#fff;--panel:#fff;--panel2:#f4f6f8;--line:#c9d2da;--track:#e4e9ee;
+      --txt:#111820;--dim:#4a5a68;--mut:#6b7a88;--ok:#0d7a4f;--warn:#a06a00;--bad:#b02a2a;--blue:#1560a8}
+    body{background:#fff;color:#111820;padding:0;font-size:11.5px}
+    .wrap{max-width:100%}
+    header{border:none;background:none;padding:0 0 6px;border-bottom:2px solid #111820;border-radius:0}
+    #pdf_btn{display:none}
+    .cols{display:none}                  /* esconde os inputs */
+    #print_head{display:block !important;font-family:var(--mono);font-size:11px;color:#4a5a68;
+      padding:6px 0 10px;border-bottom:1px solid #c9d2da;margin-bottom:10px}
+    .card,.tile,.pt{border:1px solid #c9d2da;background:#fff;box-shadow:none;break-inside:avoid}
+    .alert{background:#fff;border:1px solid #c9d2da;border-left-width:4px}
+    .tiles{grid-template-columns:repeat(4,1fr)}
+    .tile .v{font-size:20px}
+    #opt_wrap{grid-template-columns:240px 1fr !important}
+    #o_apply{display:none}
+    input[type=range]{display:none}
+    .two{grid-template-columns:1fr 1fr}
+    .f input,.f select{border:none;padding:0;background:none;font-size:12px}
+    .bar .fill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .bar,.pt,.alert,.fill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    footer{page-break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div>
+    <h1>SE-RII <span>FLIGHT PLANNER</span></h1>
+    <p>Cessna Citation 500 · 2×JT15D-1 · calibrated performance model (FL290 ★ flight-verified)</p>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px">
+    <p id="hdr_route" style="font-family:var(--mono);font-size:15px;color:var(--txt)">— → —</p>
+    <button id="pdf_btn" style="background:transparent;color:var(--ok);border:1px solid var(--ok);border-radius:8px;padding:7px 14px;font-weight:700;font-size:12.5px;cursor:pointer">🖨 Export PDF</button>
+  </div>
+</header>
+<div id="print_head" style="display:none"></div>
+
+<div class="cols">
+  <!-- ROTA -->
+  <div class="card">
+    <h2><span class="n">1</span>Route</h2>
+    <div class="r2">
+      <div class="f"><label>Origin (ICAO)</label><input id="dep" list="apts" value="LPCO" maxlength="4" style="text-transform:uppercase"></div>
+      <div class="f"><label>Destination (ICAO)</label><input id="arr" list="apts" value="LPFR" maxlength="4" style="text-transform:uppercase"></div>
+    </div>
+    <div class="apname" id="dep_n"></div>
+    <div class="apname" id="arr_n"></div>
+    <datalist id="apts"></datalist>
+    <div class="r2">
+      <div class="f"><label>Origin lat/lon</label><input id="dep_ll" placeholder="40.16,-8.47"></div>
+      <div class="f"><label>Destination lat/lon</label><input id="arr_ll" placeholder="37.01,-7.97"></div>
+    </div>
+    <div class="r2">
+      <div class="f"><label>Route factor (%)</label><input type="number" id="rf" value="10" min="0" max="50" step="1"><span class="sub">routes are never direct</span></div>
+      <div class="f"><label>Average wind (kt)</label><input type="number" id="wind" value="0" step="5"><span class="sub">+tail · −head</span></div>
+    </div>
+  </div>
+
+  <!-- PESOS -->
+  <div class="card">
+    <h2><span class="n">2</span>Mass &amp; limits <span style="color:var(--dim);font-size:10px;text-transform:none">— inputs in kg</span></h2>
+    <div class="f"><label>Basic empty weight (kg)</label><input type="number" id="bew" value="3032" step="5"><span class="sub" id="lb_bew">≈ 6,684 lb · typical CE-500, use your weighing report</span></div>
+    <div class="r2">
+      <div class="f"><label>Crew</label><input type="number" id="crew" value="2" min="1" max="2"></div>
+      <div class="f"><label>Weight per crew (kg)</label><input type="number" id="crew_w" value="86" step="1"><span class="sub" id="lb_crew_w"></span></div>
+    </div>
+    <div class="r2">
+      <div class="f"><label>Passengers (max 6)</label><input type="number" id="pax" value="2" min="0" max="8"></div>
+      <div class="f"><label>Weight per pax (kg)</label><input type="number" id="pax_w" value="84" step="1"><span class="sub" id="lb_pax_w"></span></div>
+    </div>
+    <div class="f"><label>Baggage (kg)</label><input type="number" id="bags" value="27" step="5"><span class="sub" id="lb_bags"></span></div>
+    <div class="r2">
+      <div class="f"><label>MTOW (kg)</label><input type="number" id="mtow" value="5375"><span class="sub" id="lb_mtow"></span></div>
+      <div class="f"><label>MLW (kg)</label><input type="number" id="mlw" value="5148"><span class="sub" id="lb_mlw"></span></div>
+    </div>
+  </div>
+
+  <!-- FUEL & CRUZEIRO -->
+  <div class="card">
+    <h2><span class="n">3</span>Fuel &amp; cruise</h2>
+    <div class="f"><label>Cruise mode</label>
+      <select id="reg">
+        <option value="lr" selected>Long-range</option>
+        <option value="hs">High-speed</option>
+        <option value="ec">Economy (L/h)</option>
+      </select>
+    </div>
+    <div class="f"><label>Flight level — <span id="fl_v" style="color:var(--ok);font-family:var(--mono)">FL350</span></label>
+      <input type="range" id="fl" value="350" min="100" max="410" step="10"></div>
+    <div class="f"><label>Fuel flow — <span id="ff_v" style="color:var(--ok);font-family:var(--mono)">–</span></label>
+      <input type="range" id="ec_lh" value="400" min="250" max="900" step="10">
+      <span class="sub" id="ff_sub">drag to set a FF (switches mode to Economy)</span></div>
+    <div class="r2">
+      <div class="f"><label>Final reserve (min)</label><input type="number" id="resv" value="45" min="0" step="5"></div>
+      <div class="f"><label>Alternate (NM)</label><input type="number" id="altn" value="0" min="0" step="10"></div>
+    </div>
+    <div class="f"><label>Extra fuel — <span id="xt_v" style="color:var(--ok);font-family:var(--mono)">+0 lb</span></label>
+      <input type="range" id="xtra" value="0" min="0" max="1000" step="10">
+      <span class="sub" id="xt_sub">from route min fuel to MTOW / full tanks</span></div>
+    <div class="r2">
+      <div class="f"><label>Taxi/APU (kg)</label><input type="number" id="taxi" value="91" step="5"><span class="sub" id="lb_taxi"></span></div>
+      <div class="f"><label>Fuel capacity (kg)</label><input type="number" id="cap" value="1715"><span class="sub" id="lb_cap"></span></div>
+    </div>
+    <div class="f"><label>Jet A-1 (€/L)</label><input type="number" id="ppl" value="1.30" step="0.05"></div>
+  </div>
+</div>
+
+<div class="res">
+  <div class="alerts" id="alerts"></div>
+
+  <div class="tiles">
+    <div class="tile"><div class="l">Flight time</div><div class="v" id="t_time">–</div><div class="s" id="t_time2">block –</div></div>
+    <div class="tile"><div class="l">Route distance</div><div class="v" id="t_dist">–</div><div class="s" id="t_dist2">GC – NM</div></div>
+    <div class="tile"><div class="l">Block fuel</div><div class="v" id="t_fuel">–</div><div class="s" id="t_fuel2">– lb</div></div>
+    <div class="tile"><div class="l">Fuel cost</div><div class="v" id="t_cost">–</div><div class="s" id="t_cost2">– €/NM</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <h2>Altitude &amp; power setting optimizer <span style="color:var(--dim);font-size:10px">minimum fuel for this route (climb + cruise + descent)</span></h2>
+    <div style="display:grid;grid-template-columns:280px 1fr;gap:18px" id="opt_wrap">
+      <div>
+        <div class="pgrid" style="grid-template-columns:1fr 1fr;margin-top:0">
+          <div class="pt"><div class="v" id="o_fl" style="color:var(--ok)">–</div><div class="l">Optimum FL</div></div>
+          <div class="pt"><div class="v" id="o_ff">–</div><div class="l">FF L/h</div></div>
+          <div class="pt"><div class="v" id="o_tas">–</div><div class="l">TAS kt</div></div>
+          <div class="pt"><div class="v" id="o_n1">–</div><div class="l">Est. N1 %</div></div>
+          <div class="pt"><div class="v" id="o_fuel">–</div><div class="l">Trip fuel kg</div></div>
+          <div class="pt"><div class="v" id="o_dt">–</div><div class="l">Time</div></div>
+        </div>
+        <div class="note" id="o_save" style="margin:10px 0 0;padding:8px 12px;font-size:12px">–</div>
+        <button id="o_apply" style="margin-top:10px;width:100%;background:var(--ok);color:#0c1a13;border:none;border-radius:8px;padding:9px;font-weight:700;font-size:13px;cursor:pointer">Apply to plan</button>
+      </div>
+      <div id="o_bars" style="display:flex;flex-direction:column;gap:3px;justify-content:center"></div>
+    </div>
+  </div>
+
+  <div class="two" style="margin-bottom:14px">
+    <div class="card">
+      <h2>Departure performance — takeoff <span style="color:var(--dim);font-size:10px" id="p_dep_w"></span></h2>
+      <div class="r2">
+        <div class="f"><label>Elevation (ft)</label><input type="number" id="d_elev" value="587" step="10"></div>
+        <div class="f"><label>Runway (m)</label><input type="number" id="d_rwy" value="920" step="10"></div>
+      </div>
+      <div class="r2">
+        <div class="f"><label>OAT (°C)</label><input type="number" id="d_oat" value="15" step="1"></div>
+        <div class="f"><label>QNH (hPa)</label><input type="number" id="d_qnh" value="1013" step="1"></div>
+      </div>
+      <div class="f"><label>Headwind (kt)</label><input type="number" id="d_hw" value="0" min="0" step="1"></div>
+      <div class="pgrid">
+        <div class="pt"><div class="v" id="p_v1">–</div><div class="l">V1 est.</div></div>
+        <div class="pt"><div class="v" id="p_vr">–</div><div class="l">Vr est.</div></div>
+        <div class="pt"><div class="v" id="p_v2">–</div><div class="l">V2 est.</div></div>
+        <div class="pt"><div class="v" id="p_gr">–</div><div class="l">Grd roll m</div></div>
+        <div class="pt"><div class="v" id="p_d35">–</div><div class="l">Dist 35 ft m</div></div>
+        <div class="pt"><div class="v" id="p_bfl">–</div><div class="l">BFL m</div></div>
+      </div>
+      <div class="note" id="p_tov" style="background:#22303a;border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:var(--dim);margin-top:10px">–</div>
+    </div>
+    <div class="card">
+      <h2>Destination performance — landing <span style="color:var(--dim);font-size:10px" id="p_arr_w"></span></h2>
+      <div class="r2">
+        <div class="f"><label>Elevation (ft)</label><input type="number" id="a_elev" value="24" step="10"></div>
+        <div class="f"><label>Runway (m)</label><input type="number" id="a_rwy" value="2490" step="10"></div>
+      </div>
+      <div class="r2">
+        <div class="f"><label>OAT (°C)</label><input type="number" id="a_oat" value="15" step="1"></div>
+        <div class="f"><label>QNH (hPa)</label><input type="number" id="a_qnh" value="1013" step="1"></div>
+      </div>
+      <div class="f"><label>Headwind (kt)</label><input type="number" id="a_hw" value="0" min="0" step="1"></div>
+      <div class="pgrid">
+        <div class="pt"><div class="v" id="p_vref">–</div><div class="l">Vref</div></div>
+        <div class="pt"><div class="v" id="p_vapp">–</div><div class="l">Vapp</div></div>
+        <div class="pt"><div class="v" id="p_da">–</div><div class="l">Dens alt ft</div></div>
+        <div class="pt"><div class="v" id="p_lgr">–</div><div class="l">Grd roll m</div></div>
+        <div class="pt"><div class="v" id="p_l50">–</div><div class="l">Dist 50 ft m</div></div>
+        <div class="pt"><div class="v" id="p_l60">–</div><div class="l">×1,67 m</div></div>
+      </div>
+      <div class="note" id="p_ldv" style="background:#22303a;border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:var(--dim);margin-top:10px">–</div>
+    </div>
+  </div>
+
+  <div class="two">
+    <div class="card">
+      <h2>Flight profile</h2>
+      <table id="phases">
+        <tr><th>Phase</th><th>Time</th><th>Dist NM</th><th>Fuel kg</th><th>Fuel lb</th><th>Fuel L</th></tr>
+      </table>
+      <div class="spd" id="spd"></div>
+    </div>
+    <div class="card">
+      <h2>Mass &amp; balance — weights</h2>
+      <div class="meter" id="m_zfw"></div>
+      <div class="meter" id="m_tow"></div>
+      <div class="meter" id="m_lw"></div>
+      <div class="meter" id="m_fuel"></div>
+      <table id="wtbl"></table>
+    </div>
+  </div>
+</div>
+
+<footer>
+  SE-RII Flight Planner · Citation 500 (JT15D-1) · Great-circle distance + route factor · Typical climb/descent profiles; cruise from a model calibrated on the FL290 HS point (flight-verified) and FL350 LR · Weights: typical BEW 6,684 lb, MTOW 11,850 lb, MLW 11,350 lb, fuel 3,780 lb / 564 US gal · Planning tool — AFM and official navigation data prevail.
+</footer>
+
+</div>
+<script>
+// ================= DADOS =================
+// [nome, lat, lon, elevação ft, pista mais longa m] — elev/pista aproximados: confirmar no AIP
+const APTS={
+ LPPT:["Lisbon",38.77,-9.13,374,3805],LPPR:["Porto",41.25,-8.68,228,3480],LPFR:["Faro",37.01,-7.97,24,2490],
+ LPCO:["Coimbra",40.16,-8.47,587,920],LPVZ:["Viseu",40.73,-7.89,2060,1220],LPBJ:["Beja",38.08,-7.93,636,3450],
+ LPCS:["Cascais",38.72,-9.36,325,1700],LPEV:["Evora",38.53,-7.89,807,1300],LPBG:["Bragança",41.86,-6.71,2278,1700],
+ LPPM:["Portimão",37.15,-8.58,6,900],LPMA:["Madeira",32.69,-16.77,192,2781],LPPS:["Porto Santo",33.07,-16.35,340,3000],
+ LPPD:["Ponta Delgada",37.74,-25.70,259,2323],LPLA:["Lajes",38.76,-27.09,180,3313],LPHR:["Horta",38.52,-28.72,118,1595],
+ LEMD:["Madrid",40.47,-3.56,1998,4350],LETO:["Madrid Torrejón",40.49,-3.46,2026,3700],LEBL:["Barcelona",41.30,2.08,14,3352],
+ LEMG:["Malaga",36.67,-4.50,52,3200],LEZL:["Seville",37.42,-5.90,111,3360],LEVC:["Valencia",39.49,-0.48,240,3215],
+ LEBB:["Bilbao",43.30,-2.91,138,2600],LEST:["Santiago",42.90,-8.42,1213,3200],LEVX:["Vigo",42.23,-8.63,856,2400],
+ LECO:["A Coruña",43.30,-8.38,326,1940],LEAL:["Alicante",38.28,-0.56,142,3000],LEIB:["Ibiza",38.87,1.37,24,2800],
+ LEPA:["Palma",39.55,2.74,27,3270],LEMH:["Menorca",39.86,4.22,302,2350],LEGR:["Granada",37.19,-3.78,1860,2900],
+ LEAS:["Asturias",43.56,-6.03,416,2200],LEXJ:["Santander",43.43,-3.83,16,2420],LEZG:["Zaragoza",41.67,-1.04,863,3718],
+ LEGE:["Girona",41.90,2.76,468,2400],LERS:["Reus",41.15,1.17,233,2459],
+ GCTS:["Tenerife South",28.04,-16.57,209,3200],GCXO:["Tenerife North",28.48,-16.34,2076,3170],GCLP:["Gran Canaria",27.93,-15.39,78,3100],
+ GCFV:["Fuerteventura",28.45,-13.86,85,3400],GCRR:["Lanzarote",28.95,-13.61,46,2400],LXGB:["Gibraltar",36.15,-5.35,15,1680],
+ LFPG:["Paris CDG",49.01,2.55,392,4200],LFPO:["Paris Orly",48.72,2.38,291,3650],LFPB:["Paris Le Bourget",48.97,2.44,218,3000],
+ LFBD:["Bordeaux",44.83,-0.72,162,3100],LFBO:["Toulouse",43.63,1.37,499,3500],LFML:["Marseille",43.44,5.22,74,3500],
+ LFMN:["Nice",43.66,7.22,13,2960],LFLL:["Lyon",45.73,5.08,821,4000],LFST:["Strasbourg",48.54,7.63,505,2400],
+ LFRB:["Brest",48.45,-4.42,325,3100],LFBZ:["Biarritz",43.47,-1.53,245,2250],LFMP:["Perpignan",42.74,2.87,144,2500],
+ LFKJ:["Ajaccio",41.92,8.80,18,2407],LFKB:["Bastia",42.55,9.48,26,2520],LFRS:["Nantes",47.16,-1.61,90,2900],
+ EGLL:["London Heathrow",51.47,-0.46,83,3902],EGKK:["Gatwick",51.15,-0.19,202,3316],EGLC:["London City",51.51,0.06,19,1508],
+ EGLF:["Farnborough",51.28,-0.78,238,2440],EGGW:["Luton",51.87,-0.37,526,2162],EGSS:["Stansted",51.89,0.24,348,3049],
+ EGBB:["Birmingham",52.45,-1.75,327,2600],EGCC:["Manchester",53.35,-2.27,257,3048],EGPH:["Edinburgh",55.95,-3.37,136,2556],
+ EGPF:["Glasgow",55.87,-4.43,26,2665],EGAA:["Belfast",54.66,-6.22,268,2780],EGJJ:["Jersey",49.21,-2.20,277,1706],
+ EGJB:["Guernsey",49.43,-2.60,336,1463],EIDW:["Dublin",53.42,-6.27,242,2637],EICK:["Cork",51.84,-8.49,502,2133],EINN:["Shannon",52.70,-8.92,46,3199],
+ EDDF:["Frankfurt",50.03,8.57,364,4000],EDDM:["Munich",48.35,11.79,1487,4000],EDDB:["Berlim",52.37,13.51,157,3600],
+ EDDH:["Hamburgo",53.63,9.99,53,3250],EDDL:["Düsseldorf",51.29,6.77,147,3000],EDDK:["Cologne",50.87,7.14,302,3815],
+ EDDS:["Stuttgart",48.69,9.19,1276,3345],EDDN:["Nuremberg",49.50,11.08,1046,2700],
+ EHAM:["Amsterdam",52.31,4.76,-11,3800],EHRD:["Rotterdam",51.96,4.44,-15,2200],EHEH:["Eindhoven",51.45,5.37,74,3000],
+ EBBR:["Brussels",50.90,4.48,184,3638],EBAW:["Antwerp",51.19,4.46,39,1510],EBCI:["Charleroi",50.46,4.45,614,2550],ELLX:["Luxembourg",49.63,6.20,1234,4000],
+ LSGG:["Geneva",46.24,6.11,1411,3900],LSZH:["Zurich",47.46,8.55,1416,3700],LSZB:["Bern",46.91,7.50,1674,1730],LSZA:["Lugano",46.00,8.91,915,1350],
+ LOWW:["Vienna",48.11,16.57,600,3600],LOWS:["Salzburg",47.79,13.00,1411,2750],LOWI:["Innsbruck",47.26,11.34,1907,2000],
+ LIRF:["Rome Fiumicino",41.80,12.24,15,3900],LIRA:["Rome Ciampino",41.80,12.59,427,2200],LIML:["Milan Linate",45.45,9.28,353,2440],
+ LIMC:["Milan Malpensa",45.63,8.72,768,3920],LIME:["Bergamo",45.67,9.70,782,2937],LIPZ:["Venice",45.51,12.35,7,3300],
+ LIPE:["Bologna",44.53,11.29,123,2800],LIRN:["Naples",40.88,14.29,294,2628],LICC:["Catania",37.47,15.07,39,2400],
+ LICJ:["Palermo",38.18,13.10,65,3326],LIEO:["Olbia",40.90,9.52,37,2446],LIEE:["Cagliari",39.25,9.06,13,2800],
+ LIRQ:["Florence",43.81,11.20,142,1750],LIRP:["Pisa",43.68,10.39,6,3000],
+ EKCH:["Copenhagen",55.62,12.65,17,3600],EKBI:["Billund",55.74,9.15,247,3100],ENGM:["Oslo",60.19,11.10,681,3600],ENBR:["Bergen",60.29,5.22,170,2990],
+ ESSA:["Stockholm Arlanda",59.65,17.92,137,3300],ESSB:["Bromma",59.35,17.94,47,1668],ESGG:["Gothenburg",57.66,12.28,506,3300],EFHK:["Helsinki",60.32,24.96,179,3440],
+ EPWA:["Warsaw",52.17,20.97,362,3690],EPKK:["Kraków",50.08,19.78,791,2550],LKPR:["Prague",50.10,14.26,1247,3715],LZIB:["Bratislava",48.17,17.21,436,3190],
+ LHBP:["Budapest",47.44,19.26,495,3707],LROP:["Bucharest",44.57,26.10,314,3500],LBSF:["Sofia",42.70,23.41,1742,3600],
+ LGAV:["Athens",37.94,23.94,308,4000],LGTS:["Thessaloniki",40.52,22.97,22,2440],LGIR:["Heraklion",35.34,25.18,115,2680],LGKR:["Corfu",39.60,19.91,6,2373],
+ LDZA:["Zagreb",45.74,16.07,353,3252],LDSP:["Split",43.54,16.30,79,2550],LDDU:["Dubrovnik",42.56,18.27,527,3300],LJLJ:["Ljubljana",46.22,14.46,1273,3300],
+ LYBE:["Belgrade",44.82,20.31,335,3400],LATI:["Tirana",41.41,19.72,126,2750],LMML:["Malta",35.86,14.48,300,3544],LCLK:["Larnaca",34.88,33.62,8,3000],
+ LTFM:["Istanbul",41.26,28.74,325,3750],BIKF:["Keflavík",63.99,-22.61,171,3054],GMMN:["Casablanca",33.37,-7.59,656,3720],
+ GMMX:["Marrakesh",31.61,-8.03,1545,3100],GMTT:["Tangier",35.73,-5.92,62,3500]
+};
+// perf: [FL, HS_ff, HS_n1, HS_tas, LR_ff, LR_n1, LR_tas]
+const FL_T=[200,240,280,290,310,330,350,370,410];
+const HS_FF=[1400,1260,1090,1050,960,890,820,760,660],HS_N1=[93,95.5,98.5,99.5,100,100,100,100,100],HS_TAS=[319,342,360,364,361,355,346,336,318];
+const LR_FF=[1040,940,840,820,770,720,680,640,580],LR_N1=[85,87,89,90,91,92.5,94,95,97],LR_TAS=[258,272,285,290,296,300,303,304,304];
+// subida (desde SL): FL -> [min, lb, NM]
+const CLB_FL=[100,150,200,250,290,310,350,370,410];
+const CLB_T=[4,7,11,15,20,23,30,35,45],CLB_F=[150,230,330,420,500,550,650,720,850],CLB_D=[12,22,36,52,75,88,120,145,190];
+const CD0=0.0288,TSFC=0.695,KIND=0.05,S_FT2=278.5,A0=661.4786,P0=101325;
+const HOLD_FF=800; // lb/h holding
+const L2LB=0.8*2.20462, LB2L=1/L2LB, KG2LB=2.20462, LB2KG=1/2.20462;
+const fmtKG=lb=>Math.round(lb*LB2KG).toLocaleString('pt');
+const fmtLB=lb=>Math.round(lb).toLocaleString('pt');
+
+function lin(x,xs,ys){if(x<=xs[0])return ys[0];if(x>=xs[xs.length-1])return ys[ys.length-1];
+ for(let i=1;i<xs.length;i++)if(x<=xs[i]){const f=(x-xs[i-1])/(xs[i]-xs[i-1]);return ys[i-1]+f*(ys[i]-ys[i-1]);}return ys[ys.length-1];}
+function atm(ft){const h=ft*0.3048;if(h<=11000){const T=288.15-0.0065*h;return{T,p:101325*Math.pow(T/288.15,5.25588)};}
+ const T11=288.15-0.0065*11000,p11=101325*Math.pow(T11/288.15,5.25588);return{T:T11,p:p11*Math.exp(-9.80665*(h-11000)/(287.053*T11))};}
+function dragLb(tas,ft,W){const{T,p}=atm(ft);const rho=p/(287.053*T);const q=0.5*(rho*0.0019403)*Math.pow(tas*1.68781,2);
+ return q*S_FT2*CD0+KIND*W*W/(q*S_FT2);}
+function econCruise(lh,ft,W){
+  const pph=lh*L2LB, fl=ft/100;
+  const hsFF=lin(fl,FL_T,HS_FF),hsTAS=lin(fl,FL_T,HS_TAS),hsN1=lin(fl,FL_T,HS_N1);
+  if(pph>=hsFF)return{tas:hsTAS,ff:hsFF,n1:hsN1,note:'thrust-limited'};
+  let vmd=150;for(let v=120;v<400;v+=2)if(dragLb(v+2,ft,W)>dragLb(v,ft,W)){vmd=v;break;}
+  const Dt=pph/TSFC;
+  if(dragLb(vmd,ft,W)>Dt)return null;
+  let lo=vmd,hi=450;for(let i=0;i<50;i++){const m=(lo+hi)/2;(dragLb(m,ft,W)>Dt)?hi=m:lo=m;}
+  const lrFF=lin(fl,FL_T,LR_FF),lrN1=lin(fl,FL_T,LR_N1);
+  return{tas:(lo+hi)/2,ff:pph,n1:Math.min(100,lrN1+(pph-lrFF)*(hsN1-lrN1)/(hsFF-lrFF)),note:''};
+}
+function gcNM(a,b){const R=3440.065,r=Math.PI/180;
+ const dLat=(b[0]-a[0])*r,dLon=(b[1]-a[1])*r;
+ const h=Math.sin(dLat/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dLon/2)**2;
+ return 2*R*Math.asin(Math.sqrt(h));}
+function fmtT(min){if(!isFinite(min))return'–';const h=Math.floor(min/60),m=Math.round(min%60);return h+'h'+String(m).padStart(2,'0');}
+
+// datalist
+const dl=document.getElementById('apts');
+Object.entries(APTS).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.label=v[0];dl.appendChild(o);});
+
+function getPt(icaoId,llId,nameId,perfPrefix){
+  const code=(document.getElementById(icaoId).value||'').trim().toUpperCase();
+  const nameEl=document.getElementById(nameId), llEl=document.getElementById(llId);
+  if(APTS[code]){nameEl.textContent=code+' · '+APTS[code][0];
+    if(llEl.dataset.for!==code){llEl.value=APTS[code][1]+','+APTS[code][2];llEl.dataset.for=code;
+      if(perfPrefix){document.getElementById(perfPrefix+'_elev').value=APTS[code][3];
+        document.getElementById(perfPrefix+'_rwy').value=APTS[code][4];}}
+    return[APTS[code][1],APTS[code][2],code];}
+  const m=(llEl.value||'').split(',').map(Number);
+  if(m.length===2&&isFinite(m[0])&&isFinite(m[1])){nameEl.textContent=code?code+' · manual coords':'manual coords';return[m[0],m[1],code||'???'];}
+  nameEl.textContent=code?code+' · unknown — enter lat,lon':'';
+  return null;
+}
+
+function meter(el,label,val,limit,unit){
+  const pct=limit>0?val/limit*100:0;
+  const st=pct>100?'bad':(pct>92?'warn':'ok');
+  const col=st==='bad'?'var(--bad)':(st==='warn'?'var(--warn)':'var(--ok)');
+  const icon=st==='bad'?'✗':(st==='warn'?'⚠':'✓');
+  el.innerHTML='<div class="head"><span>'+label+'</span><b>'+fmtKG(val)+' / '+fmtKG(limit)+' kg</b></div>'+
+   '<div class="bar"><div class="fill" style="width:'+Math.min(100,pct)+'%;background:'+col+'"></div><div class="lim" style="right:0"></div></div>'+
+   '<div class="foot">'+icon+' '+pct.toFixed(1)+' % of limit · '+fmtLB(val)+' / '+fmtLB(limit)+' lb'+(pct>100?' — EXCEEDED':'')+'</div>';
+}
+
+// ---- performance de aeródromo (integração calibrada, como no planner) ----
+const KT2FPS=1.68781,T0S=4400,KV=2.728;
+function atmoAp(elev,qnh,oat){
+  const pa=elev+(1013.25-qnh)*27;
+  const{p}=atm(Math.max(0,pa));
+  const rho=p/(287.053*(273.15+oat));
+  const isaT=15-1.98*pa/1000;
+  return{pa,rho,sigma:rho/1.225,da:pa+118.8*(oat-isaT)};
+}
+function vs40W(W){return 88*Math.sqrt(W/11350);}
+function toRoll(W,elev,qnh,oat,hwKt){
+  const{rho,sigma}=atmoAp(elev,qnh,oat);
+  const vlof=1.1*vs40W(W)*1.07*KT2FPS/Math.sqrt(sigma);
+  const hw=hwKt*KT2FPS;
+  let V=hw,s=0;const dt=0.05,rslug=rho*0.0019403;
+  for(let i=0;i<20000&&V<vlof;i++){
+    const q=0.5*rslug*V*V,L=q*S_FT2*0.4,D=q*S_FT2*0.06,M=V/1116;
+    const T=T0S*Math.pow(sigma,0.85)*(1-KV*M+0.6*M*M);
+    const a=32.174*(T-D-0.02*Math.max(0,W-L))/W;
+    if(a<=0.1)return Infinity;
+    V+=a*dt;s+=Math.max(0,V-hw)*dt;
+  }
+  return s;
+}
+function airportPerf(tow,lw){
+  const M=0.3048;
+  // descolagem (origem)
+  const dE=+document.getElementById('d_elev').value||0,dR=+document.getElementById('d_rwy').value||0;
+  const dO=+document.getElementById('d_oat').value,dQ=+document.getElementById('d_qnh').value||1013.25,dH=Math.max(0,+document.getElementById('d_hw').value||0);
+  const k=Math.sqrt(tow/11850);
+  // CE-500 simplified-criteria card anchors: 100/101/108 @ 11,850 lb, sqrt-weight scaled (matches 96/97/104 @ 11,000)
+  document.getElementById('p_v1').textContent=(100*k).toFixed(0);
+  document.getElementById('p_vr').textContent=(101*k).toFixed(0);
+  document.getElementById('p_v2').textContent=(108*k).toFixed(0);
+  document.getElementById('p_dep_w').textContent='· TOW '+fmtKG(tow)+' kg / '+fmtLB(tow)+' lb';
+  const gr=toRoll(tow,dE,dQ,isFinite(dO)?dO:15,dH);
+  const d35=gr/0.80,bfl=3600*(d35/2930);
+  document.getElementById('p_gr').textContent=isFinite(gr)?Math.round(gr*M):'∞';
+  document.getElementById('p_d35').textContent=isFinite(gr)?Math.round(d35*M):'∞';
+  document.getElementById('p_bfl').textContent=isFinite(gr)?Math.round(bfl*M):'∞';
+  const tov=document.getElementById('p_tov');
+  if(!isFinite(gr)){tov.textContent='✗ Not enough acceleration at this weight/conditions.';tov.style.borderLeftColor='var(--bad)';}
+  else if(bfl*M<=dR){tov.textContent='✓ GO — BFL '+Math.round(bfl*M)+' m ≤ runway '+dR+' m (margin '+Math.round(dR-bfl*M)+' m).';tov.style.borderLeftColor='var(--ok)';}
+  else if(d35*M<=dR){tov.textContent='⚠ MARGINAL — lifts off ('+Math.round(d35*M)+' m) but no accelerate-stop protection (BFL '+Math.round(bfl*M)+' m > '+dR+' m).';tov.style.borderLeftColor='var(--warn)';}
+  else{tov.textContent='✗ NO-GO — BFL '+Math.round(bfl*M)+' m > runway '+dR+' m. Reduce weight or use another runway.';tov.style.borderLeftColor='var(--bad)';}
+  // aterragem (destino)
+  const aE=+document.getElementById('a_elev').value||0,aR=+document.getElementById('a_rwy').value||0;
+  const aO=+document.getElementById('a_oat').value,aQ=+document.getElementById('a_qnh').value||1013.25,aH=Math.max(0,+document.getElementById('a_hw').value||0);
+  const A=atmoAp(aE,aQ,isFinite(aO)?aO:15);
+  const vs0=vs40W(lw),vref=1.3*vs0,vapp=vref+5;
+  const vtd=Math.max(0,1.15*vs0*KT2FPS/Math.sqrt(A.sigma)-aH*KT2FPS);
+  const lgr=vtd*vtd/(2*0.30*32.174),l50=lgr+950,l60=l50*1.667;
+  document.getElementById('p_arr_w').textContent='· LW '+fmtKG(lw)+' kg / '+fmtLB(lw)+' lb';
+  document.getElementById('p_vref').textContent=vref.toFixed(0);
+  document.getElementById('p_vapp').textContent=vapp.toFixed(0);
+  document.getElementById('p_da').textContent=Math.round(A.da).toLocaleString('pt');
+  document.getElementById('p_lgr').textContent=Math.round(lgr*M);
+  document.getElementById('p_l50').textContent=Math.round(l50*M);
+  document.getElementById('p_l60').textContent=Math.round(l60*M);
+  const ldv=document.getElementById('p_ldv');
+  if(l60*M<=aR){ldv.textContent='✓ OK incl. 60 % factor ('+Math.round(l60*M)+' m ≤ '+aR+' m).';ldv.style.borderLeftColor='var(--ok)';}
+  else if(l50*M<=aR){ldv.textContent='⚠ Fits unfactored ('+Math.round(l50*M)+' m ≤ '+aR+' m); factored ×1.67 ('+Math.round(l60*M)+' m) exceeds — no margin for a long touchdown.';ldv.style.borderLeftColor='var(--warn)';}
+  else{ldv.textContent='✗ Landing distance '+Math.round(l50*M)+' m > runway '+aR+' m at this weight.';ldv.style.borderLeftColor='var(--bad)';}
+}
+// ---- otimizador de altitude & power ----
+function optimize(route,wind,W){
+  let best=null,rows=[];
+  for(let f=100;f<=410;f+=10){
+    const clbT=lin(f,CLB_FL,CLB_T),clbF=lin(f,CLB_FL,CLB_F),clbD=lin(f,CLB_FL,CLB_D);
+    const desT=f*100/1800,desD=f*0.31,desF=desT/60*500;
+    const crzD=route-clbD-desD;
+    if(crzD<10)continue;
+    const ft=f*100,hsFF=lin(f,FL_T,HS_FF);
+    let bfpnm=1e9,bV=0,bff=0;
+    for(let V=140;V<=430;V+=2){
+      const ff=TSFC*dragLb(V,ft,W);
+      if(ff>hsFF)continue;
+      const gs=V+wind;if(gs<60)continue;
+      const fpnm=ff/gs;
+      if(fpnm<bfpnm){bfpnm=fpnm;bV=V;bff=ff;}
+    }
+    if(!bV)continue;
+    const fuel=clbF+crzD*bfpnm+desF,time=clbT+crzD/(bV+wind)*60+desT;
+    const r={fl:f,fuel,time,tas:bV,ff:bff};
+    rows.push(r);
+    if(!best||fuel<best.fuel)best=r;
+  }
+  return{best,rows};
+}
+function renderOpt(route,wind,currentTrip){
+  const{best,rows}=optimize(route,wind,10500);
+  const bars=document.getElementById('o_bars');
+  if(!best){bars.innerHTML='';document.getElementById('o_save').textContent='Route too short to optimize.';return;}
+  const lrN1v=lin(best.fl,FL_T,LR_N1),lrFFv=lin(best.fl,FL_T,LR_FF),hsN1v=lin(best.fl,FL_T,HS_N1),hsFFv=lin(best.fl,FL_T,HS_FF);
+  const n1=Math.min(100,lrN1v+(best.ff-lrFFv)*(hsN1v-lrN1v)/(hsFFv-lrFFv));
+  document.getElementById('o_fl').textContent='FL'+best.fl;
+  document.getElementById('o_ff').textContent=Math.round(best.ff*LB2L);
+  document.getElementById('o_tas').textContent=Math.round(best.tas);
+  document.getElementById('o_n1').textContent=n1.toFixed(0);
+  document.getElementById('o_fuel').textContent=fmtKG(best.fuel);
+  document.getElementById('o_dt').textContent=fmtT(best.time);
+  const sv=document.getElementById('o_save');
+  const diff=currentTrip-best.fuel;
+  if(diff>25)sv.innerHTML='The current plan burns <b>'+fmtKG(currentTrip)+' kg</b> en route — the optimum saves <b style="color:var(--ok)">'+fmtKG(diff)+' kg ('+Math.round(diff*LB2L)+' L)</b>.';
+  else if(diff<-25)sv.textContent='The current plan is already below the model optimum (difference '+fmtKG(-diff)+' kg) — probably due to manual mode/FL.';
+  else sv.textContent='The current plan is practically at the optimum (±'+fmtKG(Math.abs(diff))+' kg).';
+  const maxF=Math.max(...rows.map(r=>r.fuel));
+  bars.innerHTML=rows.map(r=>{
+    const isB=r.fl===best.fl;
+    return '<div style="display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px">'+
+     '<span style="width:44px;color:'+(isB?'var(--ok)':'var(--dim)')+';font-weight:'+(isB?'700':'400')+'">FL'+r.fl+'</span>'+
+     '<div style="flex:1;height:11px;background:var(--track);border-radius:4px;overflow:hidden">'+
+     '<div style="height:100%;width:'+(r.fuel/maxF*100)+'%;background:'+(isB?'var(--ok)':'#2f6b55')+';border-radius:4px 0 0 4px"></div></div>'+
+     '<span style="width:110px;text-align:right;color:'+(isB?'var(--txt)':'var(--mut)')+'">'+fmtKG(r.fuel)+' kg · '+fmtT(r.time)+'</span></div>';
+  }).join('');
+}
+function plan(){
+  const alerts=[];
+  const dep=getPt('dep','dep_ll','dep_n','d'), arr=getPt('arr','arr_ll','arr_n','a');
+  const hdr=document.getElementById('hdr_route');
+  if(!dep||!arr){hdr.textContent='— → —';document.getElementById('alerts').innerHTML='<div class="alert warn">⚠ Set origin and destination (ICAO from the list or manual lat,lon).</div>';return;}
+  hdr.textContent=dep[2]+' → '+arr[2];
+  const gc=gcNM(dep,arr);
+  const rf=+document.getElementById('rf').value||0;
+  const route=gc*(1+rf/100);
+  const wind=+document.getElementById('wind').value||0;
+  let fl=Math.min(410,Math.max(100,+document.getElementById('fl').value||350));
+  // pesos — entradas em kg, cálculo interno em lb
+  const kgIn=id=>(+document.getElementById(id).value||0)*KG2LB;
+  const bew=kgIn('bew')||6684;
+  const crew=(+document.getElementById('crew').value||2)*(kgIn('crew_w')||190);
+  const paxN=+document.getElementById('pax').value||0;
+  const pax=paxN*(kgIn('pax_w')||185);
+  const bags=kgIn('bags');
+  const mtow=kgIn('mtow')||11850, mlw=kgIn('mlw')||11350;
+  const cap=kgIn('cap')||3780;
+  // ecos em lb debaixo dos campos kg
+  [['bew',' · típico CE-500'],['crew_w',''],['pax_w',''],['bags',''],['mtow',''],['mlw',''],['taxi',''],['cap','']].forEach(([id,sfx])=>{
+    const el=document.getElementById('lb_'+id);
+    if(el)el.textContent='≈ '+fmtLB((+document.getElementById(id).value||0)*KG2LB)+' lb'+sfx;
+  });
+  const zfw=bew+crew+pax+bags;
+  if(paxN>6)alerts.push(['warn','⚠ '+paxN+' passengers — the CE-500 is certified for 6 pax seats.']);
+  // perfil: reduzir FL se a rota for curta
+  let clbT,clbF,clbD,desT,desF,desD,crzD, flUsed=fl, reduced=false;
+  function phases(f){
+    clbT=lin(f,CLB_FL,CLB_T);clbF=lin(f,CLB_FL,CLB_F);clbD=lin(f,CLB_FL,CLB_D);
+    desT=f*100/1800;desD=f*0.31;desF=desT/60*500;
+    crzD=route-clbD-desD;
+  }
+  phases(flUsed);
+  while(crzD<15&&flUsed>100){flUsed-=10;reduced=true;phases(flUsed);}
+  if(crzD<0){crzD=0;alerts.push(['bad','✗ Route too short even for FL100 — climb+descent ('+Math.round(clbD+desD)+' NM) exceed the route.']);}
+  if(reduced)alerts.push(['warn','⚠ Route too short for FL'+fl+' — profile adjusted to FL'+flUsed+' (climb+descent need '+Math.round(clbD+desD)+' NM).']);
+  // cruzeiro
+  const reg=document.getElementById('reg').value;
+  let tas,ff,n1,regName,ecNote='';
+  if(reg==='hs'){tas=lin(flUsed,FL_T,HS_TAS);ff=lin(flUsed,FL_T,HS_FF);n1=lin(flUsed,FL_T,HS_N1);regName='High-speed';}
+  else if(reg==='lr'){tas=lin(flUsed,FL_T,LR_TAS);ff=lin(flUsed,FL_T,LR_FF);n1=lin(flUsed,FL_T,LR_N1);regName='Long-range';}
+  else{const lh=+document.getElementById('ec_lh').value||400;const e=econCruise(lh,flUsed*100,10500);
+    if(!e){alerts.push(['bad','✗ '+lh+' L/h cannot sustain level flight at FL'+flUsed+'.']);return render();}
+    tas=e.tas;ff=e.ff;n1=e.n1;regName='Economy '+lh+' L/h';ecNote=e.note;
+    if(e.note)alerts.push(['warn','⚠ At FL'+flUsed+' the engines only burn ~'+Math.round(e.ff*LB2L)+' L/h at max N1 — thrust-limited.']);}
+  const gs=tas+wind;
+  if(gs<80){alerts.push(['bad','✗ Unrealistic headwind — GS '+Math.round(gs)+' kt.']);return render();}
+  const crzT=crzD/gs*60, crzF=crzT/60*ff;
+  // fuel
+  const taxi=kgIn('taxi');
+  const resvMin=+document.getElementById('resv').value||0, resvF=resvMin/60*HOLD_FF;
+  const altnNM=+document.getElementById('altn').value||0, altnF=altnNM>0?altnNM*4.5+100:0;
+  const trip=clbF+crzF+desF;
+  // slider de extra fuel: do min fuel da rota até MTOW / capacidade
+  const xEl=document.getElementById('xtra');
+  const minBlock=taxi+trip+resvF+altnF;
+  const maxBlock=Math.max(minBlock,Math.min(cap,mtow-zfw+taxi));
+  const maxExtra=Math.max(0,Math.floor(maxBlock-minBlock));
+  xEl.max=maxExtra;xEl.disabled=maxExtra<=0;
+  if(+xEl.value>maxExtra)xEl.value=maxExtra;
+  const xtra=Math.min(maxExtra,Math.max(0,+xEl.value||0));
+  const block=minBlock+xtra;
+  const ramp=zfw+block, tow=ramp-taxi, lw=tow-trip;
+  document.getElementById('xt_v').textContent='+'+fmtKG(xtra)+' kg · '+fmtLB(xtra)+' lb · '+Math.round(xtra*LB2L)+' L';
+  document.getElementById('xt_sub').textContent='min fuel '+fmtKG(minBlock)+' kg → max '+fmtKG(maxBlock)+' kg ('+(maxBlock>=cap-1?'full tanks':'MTOW-limited')+')'+(maxExtra<=0?' — no margin for extra at this weight':'');
+  // sliders: readouts e sincronização
+  document.getElementById('fl_v').textContent='FL'+flUsed+(reduced?' (requested FL'+fl+')':'');
+  document.getElementById('ff_v').textContent=Math.round(ff*LB2L)+' L/h · '+Math.round(ff)+' lb/h';
+  if(reg!=='ec'){document.getElementById('ec_lh').value=Math.round(ff*LB2L);
+    document.getElementById('ff_sub').textContent='showing '+regName+' FF — drag to set (switches to Economy)';}
+  else document.getElementById('ff_sub').textContent='economy mode: FF set by you'+(ecNote?' · '+ecNote:'');
+  airportPerf(tow,lw);
+  renderOpt(route,wind,trip);
+  if(block>cap)alerts.push(['bad','✗ Block fuel '+fmtKG(block)+' kg ('+fmtLB(block)+' lb) exceeds the '+fmtKG(cap)+' kg capacity — reduce reserve/extra or plan a fuel stop.']);
+  if(tow>mtow)alerts.push(['bad','✗ TOW '+fmtKG(tow)+' kg exceeds MTOW ('+fmtKG(mtow)+' kg) by '+fmtKG(tow-mtow)+' kg ('+fmtLB(tow-mtow)+' lb).']);
+  if(lw>mlw)alerts.push(['bad','✗ Landing weight '+fmtKG(lw)+' kg exceeds MLW ('+fmtKG(mlw)+' kg).']);
+  if(alerts.filter(a=>a[0]==='bad').length===0)alerts.unshift(['ok','✓ Plan feasible — TOW '+fmtKG(tow)+' kg ('+fmtLB(tow)+' lb), landing at '+fmtKG(lw)+' kg, block fuel '+fmtKG(block)+' kg ('+Math.round(block*LB2L)+' L).']);
+  // render
+  const fT=clbT+crzT+desT, bT=fT+15;
+  document.getElementById('t_time').textContent=fmtT(fT);
+  document.getElementById('t_time2').textContent='bloco '+fmtT(bT)+' (táxi incl.)';
+  document.getElementById('t_dist').textContent=Math.round(route)+' NM';
+  document.getElementById('t_dist2').textContent='GC '+Math.round(gc)+' NM +'+rf+'%';
+  document.getElementById('t_fuel').textContent=Math.round(block*LB2L)+' L';
+  document.getElementById('t_fuel2').textContent=fmtKG(block)+' kg · '+fmtLB(block)+' lb';
+  const burn=taxi+trip; // fuel realmente queimado: táxi + subida + cruzeiro + descida
+  const ppl=+document.getElementById('ppl').value||0, cost=burn*LB2L*ppl;
+  document.getElementById('t_cost').textContent=ppl>0?Math.round(cost).toLocaleString('pt')+' €':'–';
+  document.getElementById('t_cost2').textContent=ppl>0&&route>0?Math.round(burn*LB2L)+' L queimados · '+(cost/route).toFixed(2)+' €/NM':'';
+  const tb=document.getElementById('phases');
+  while(tb.rows.length>1)tb.deleteRow(1);
+  const rr=(n,t,d,f,cls)=>{const r=tb.insertRow();if(cls)r.className=cls;
+    r.insertCell().textContent=n;r.insertCell().textContent=t;r.insertCell().textContent=d;
+    r.insertCell().textContent=isFinite(f)?fmtKG(f):'–';
+    r.insertCell().textContent=isFinite(f)?fmtLB(f):'–';
+    r.insertCell().textContent=isFinite(f)?Math.round(f*LB2L):'–';};
+  rr('Taxi / APU','0h15','–',taxi);
+  rr('Climb → FL'+flUsed,fmtT(clbT),Math.round(clbD),clbF);
+  rr('Cruise FL'+flUsed,fmtT(crzT),Math.round(crzD),crzF);
+  rr('Descent',fmtT(desT),Math.round(desD),desF);
+  rr('Reserve '+resvMin+' min','–','–',resvF);
+  if(altnF>0)rr('Alternate '+altnNM+' NM','–','–',altnF);
+  if(xtra>0)rr('Extra','–','–',xtra);
+  rr('TOTAL BLOCK',fmtT(bT),Math.round(route),block,'tot');
+  document.getElementById('spd').innerHTML='<span>Mode <b>'+regName+'</b></span><span>N1 <b>'+n1.toFixed(0)+'%</b></span>'+
+   '<span>TAS <b>'+Math.round(tas)+' kt</b></span><span>GS <b>'+Math.round(gs)+' kt</b></span><span>FF <b>'+Math.round(ff)+' lb/h · '+Math.round(ff*LB2L)+' L/h</b></span>';
+  meter(document.getElementById('m_zfw'),'Zero fuel weight',zfw,mtow-1000>zfw?zfw+1000:zfw*1.05,'kg');
+  document.getElementById('m_zfw').querySelector('.foot').textContent='payload '+fmtKG(crew+pax+bags)+' kg / '+fmtLB(crew+pax+bags)+' lb (crew+pax+baggage)';
+  document.getElementById('m_zfw').querySelector('.bar').style.display='none';
+  document.getElementById('m_zfw').querySelector('.head b').textContent=fmtKG(zfw)+' kg · '+fmtLB(zfw)+' lb';
+  meter(document.getElementById('m_tow'),'Takeoff weight vs MTOW',tow,mtow,'kg');
+  meter(document.getElementById('m_lw'),'Landing weight vs MLW',lw,mlw,'kg');
+  meter(document.getElementById('m_fuel'),'Fuel vs capacity',block,cap,'kg');
+  const wt=document.getElementById('wtbl');wt.innerHTML='';
+  [['BEW',bew],['Crew',crew],['Passengers ('+paxN+')',pax],['Baggage',bags],['ZFW',zfw],['Block fuel',block],['Ramp',ramp],['TOW',tow],['Trip fuel',trip],['Landing weight',lw]]
+   .forEach(([k,v],i)=>{const r=wt.insertRow();if(k==='TOW'||k==='ZFW'||k==='Landing weight')r.style.fontWeight='700';
+    r.insertCell().textContent=k;
+    r.insertCell().textContent=fmtKG(v)+' kg';
+    r.insertCell().textContent=fmtLB(v)+' lb';});
+  render();
+  function render(){
+    document.getElementById('alerts').innerHTML=alerts.map(a=>'<div class="alert '+a[0]+'">'+a[1]+'</div>').join('');
+  }
+}
+document.getElementById('ec_lh').addEventListener('input',()=>{document.getElementById('reg').value='ec';});
+document.getElementById('pdf_btn').addEventListener('click',()=>{
+  const g=id=>document.getElementById(id).value;
+  const now=new Date();
+  document.getElementById('print_head').innerHTML=
+   'FLIGHT PLAN · '+document.getElementById('hdr_route').textContent+' · '+now.toLocaleDateString('en-GB')+' '+now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+
+   ' &nbsp;|&nbsp; Route factor '+g('rf')+' % · Wind '+g('wind')+' kt · '+document.getElementById('fl_v').textContent+' · '+document.getElementById('reg').selectedOptions[0].text+
+   ' &nbsp;|&nbsp; '+g('crew')+' crew + '+g('pax')+' pax · BEW '+g('bew')+' kg &nbsp;|&nbsp; Planning values — the AFM prevails';
+  window.print();
+});
+document.getElementById('o_apply').addEventListener('click',()=>{
+  const fl=document.getElementById('o_fl').textContent.replace('FL','');
+  const ff=document.getElementById('o_ff').textContent;
+  if(!fl||fl==='–')return;
+  document.getElementById('fl').value=fl;
+  document.getElementById('reg').value='ec';
+  document.getElementById('ec_lh').value=ff;
+  plan();
+});
+document.querySelectorAll('input,select').forEach(el=>{el.addEventListener('input',plan);el.addEventListener('change',plan);});
+plan();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
+}
+</script>
+</body>
+</html>
