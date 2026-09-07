@@ -228,6 +228,7 @@
       <div class="f"><label>Route factor (%)</label><input type="number" id="rf" value="10" min="0" max="50" step="1"><span class="sub">routes are never direct</span></div>
       <div class="f"><label>Average wind (kt)</label><input type="number" id="wind" value="0" step="5"><span class="sub">+tail · −head</span></div>
     </div>
+    <div class="f"><label>Route distance (NM)</label><input type="number" id="dist_man" placeholder="auto" min="0" step="5"><span class="sub" id="dist_sub">leave blank to compute from lat/lon · route factor still applies</span></div>
   </div>
 </section>
 
@@ -285,6 +286,7 @@
 
 <!-- ===================== PERFORMANCE ===================== -->
 <section id="view-perf">
+  <p class="sub" style="font-size:11px;color:var(--mut);margin-bottom:10px">Elevation and runway fill in automatically for known ICAO codes; edit them here for any other airfield.</p>
   <div class="seg">
     <button type="button" id="pt_to" class="on">Takeoff</button>
     <button type="button" id="pt_ld">Landing</button>
@@ -494,6 +496,13 @@ function getPt(icaoId,llId,nameId,perfPrefix){
   nameEl.textContent=code?code+' · unknown — enter lat,lon':'';
   return null;
 }
+const DIST_SUB_DEF='leave blank to compute from lat/lon · route factor still applies';
+// ponto sem coordenadas: só válido quando a distância é introduzida à mão
+function manualPt(icaoId,nameId){
+  const code=(document.getElementById(icaoId).value||'').trim().toUpperCase();
+  document.getElementById(nameId).textContent=code?code+' · manual distance':'manual distance';
+  return[NaN,NaN,code||'???'];
+}
 
 function meter(el,label,val,limit,unit){
   const pct=limit>0?val/limit*100:0;
@@ -623,11 +632,19 @@ function renderOpt(route,wind,currentTrip){
 }
 function plan(){
   const alerts=[];
-  const dep=getPt('dep','dep_ll','dep_n','d'), arr=getPt('arr','arr_ll','arr_n','a');
+  let dep=getPt('dep','dep_ll','dep_n','d'), arr=getPt('arr','arr_ll','arr_n','a');
+  const distMan=+document.getElementById('dist_man').value||0;
+  const distSub=document.getElementById('dist_sub');
+  // com distância manual não são precisas coordenadas
+  if(distMan>0){
+    if(!dep)dep=manualPt('dep','dep_n');
+    if(!arr)arr=manualPt('arr','arr_n');
+  }
   const hdr=document.getElementById('hdr_route');
-  if(!dep||!arr){hdr.textContent='— → —';document.getElementById('alerts').innerHTML='<div class="alert warn">⚠ Set origin and destination (ICAO from the list or manual lat,lon).</div>';updateBadges([['warn','origin and destination']]);return;}
+  if(!dep||!arr){hdr.textContent='— → —';distSub.textContent=DIST_SUB_DEF;document.getElementById('alerts').innerHTML='<div class="alert warn">⚠ Set origin and destination (ICAO from the list or manual lat,lon), or enter a route distance.</div>';updateBadges([['warn','origin and destination']]);return;}
   hdr.textContent=dep[2]+' → '+arr[2];
-  const gc=gcNM(dep,arr);
+  const gc=distMan>0?distMan:gcNM(dep,arr);
+  distSub.textContent=distMan>0?'manual distance in use — clear to go back to lat/lon':DIST_SUB_DEF;
   const rf=+document.getElementById('rf').value||0;
   const route=gc*(1+rf/100);
   const wind=+document.getElementById('wind').value||0;
@@ -705,7 +722,9 @@ function plan(){
   document.getElementById('t_time').textContent=fmtT(fT);
   document.getElementById('t_time2').textContent='bloco '+fmtT(bT)+' (táxi incl.)';
   document.getElementById('t_dist').textContent=Math.round(route)+' NM';
-  document.getElementById('t_dist2').textContent='GC '+Math.round(gc)+' NM +'+rf+'%';
+  document.getElementById('t_dist2').textContent=distMan>0
+    ?'manual '+Math.round(gc)+' NM'+(rf>0?' +'+rf+'%':'')
+    :'GC '+Math.round(gc)+' NM +'+rf+'%';
   document.getElementById('t_fuel').textContent=Math.round(block*LB2L)+' L';
   document.getElementById('t_fuel2').textContent=fmtKG(block)+' kg · '+fmtLB(block)+' lb';
   const burn=taxi+trip; // fuel realmente queimado: táxi + subida + cruzeiro + descida
