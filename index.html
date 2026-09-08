@@ -492,7 +492,7 @@
 // ================= APP IDENTITY =================
 // Release rule: version 1.N.x goes with the service-worker cache serii-planner-vN
 // (1.6.0 ↔ serii-planner-v6). When publishing, bump BOTH in the same commit.
-const APP={name:'SE-RII Flight Planner',version:'1.6.0',build:'2026-09-08',developer:'TI Systems',email:'info@tisystems.pt',repo:'https://github.com/danieltis/serii-planner'};
+const APP={name:'SE-RII Flight Planner',version:'1.7.0',build:'2026-09-08',developer:'TI Systems',email:'info@tisystems.pt',repo:'https://github.com/danieltis/serii-planner'};
 
 // ================= DATA =================
 // Original curated table — kept only as a fallback for codes that do not exist
@@ -563,16 +563,30 @@ function atm(ft){const h=ft*0.3048;if(h<=11000){const T=288.15-0.0065*h;return{T
  const T11=288.15-0.0065*11000,p11=101325*Math.pow(T11/288.15,5.25588);return{T:T11,p:p11*Math.exp(-9.80665*(h-11000)/(287.053*T11))};}
 function dragLb(tas,ft,W){const{T,p}=atm(ft);const rho=p/(287.053*T);const q=0.5*(rho*0.0019403)*Math.pow(tas*1.68781,2);
  return q*S_FT2*CD0+KIND*W*W/(q*S_FT2);}
+// Economy cruise at a pilot-set fuel flow, anchored on the calibrated tables in three zones:
+//  pph >= hsFF      thrust-limited, so the high-speed point of that level;
+//  lrFF <= pph < hsFF   linear blend between the LR and HS table points, so TAS never exceeds HS
+//                       and inherits the fall-off above FL290;
+//  pph < lrFF       drag model for the shape of the curve only, scaled to the LR point (the table
+//                   sets the level, the model sets how fast TAS decays with less fuel flow).
 function econCruise(lh,ft,W){
   const pph=lh*L2LB, fl=ft/100;
   const hsFF=lin(fl,FL_T,HS_FF),hsTAS=lin(fl,FL_T,HS_TAS),hsN1=lin(fl,FL_T,HS_N1);
+  const lrFF=lin(fl,FL_T,LR_FF),lrTAS=lin(fl,FL_T,LR_TAS),lrN1=lin(fl,FL_T,LR_N1);
+  const slopeN1=(hsN1-lrN1)/(hsFF-lrFF);
   if(pph>=hsFF)return{tas:hsTAS,ff:hsFF,n1:hsN1,note:'thrust-limited'};
+  if(pph>=lrFF){const f=(pph-lrFF)/(hsFF-lrFF);
+    return{tas:lrTAS+f*(hsTAS-lrTAS),ff:pph,n1:lrN1+f*(hsN1-lrN1),note:''};}
   let vmd=150;for(let v=120;v<400;v+=2)if(dragLb(v+2,ft,W)>dragLb(v,ft,W)){vmd=v;break;}
-  const Dt=pph/TSFC;
-  if(dragLb(vmd,ft,W)>Dt)return null;
-  let lo=vmd,hi=450;for(let i=0;i<50;i++){const m=(lo+hi)/2;(dragLb(m,ft,W)>Dt)?hi=m:lo=m;}
-  const lrFF=lin(fl,FL_T,LR_FF),lrN1=lin(fl,FL_T,LR_N1);
-  return{tas:(lo+hi)/2,ff:pph,n1:Math.min(100,lrN1+(pph-lrFF)*(hsN1-lrN1)/(hsFF-lrFF)),note:''};
+  // level-flight TAS above Vmd where dragLb(v)=ff/TSFC (null when the fuel flow cannot hold level)
+  const tasDrag=p=>{const Dt=p/TSFC;
+    if(dragLb(vmd,ft,W)>Dt)return null;
+    let lo=vmd,hi=450;for(let i=0;i<50;i++){const m=(lo+hi)/2;(dragLb(m,ft,W)>Dt)?hi=m:lo=m;}
+    return(lo+hi)/2;};
+  const v=tasDrag(pph);
+  if(v===null)return null;
+  const vRef=tasDrag(lrFF);
+  return{tas:vRef?lrTAS*v/vRef:lrTAS,ff:pph,n1:Math.max(70,lrN1+(pph-lrFF)*slopeN1),note:''};
 }
 function gcNM(a,b){const R=3440.065,r=Math.PI/180;
  const dLat=(b[0]-a[0])*r,dLon=(b[1]-a[1])*r;
@@ -773,14 +787,19 @@ function optimize(route,wind,W){
     const desT=f*100/1800,desD=f*0.31,desF=desT/60*500;
     const crzD=route-clbD-desD;
     if(crzD<10)continue;
-    const ft=f*100,hsFF=lin(f,FL_T,HS_FF);
+    const ft=f*100,hsFF=lin(f,FL_T,HS_FF),lrFF=lin(f,FL_T,LR_FF);
     let bfpnm=1e9,bV=0,bff=0;
-    for(let V=140;V<=430;V+=2){
-      const ff=TSFC*dragLb(V,ft,W);
-      if(ff>hsFF)continue;
-      const gs=V+wind;if(gs<60)continue;
-      const fpnm=ff/gs;
-      if(fpnm<bfpnm){bfpnm=fpnm;bV=V;bff=ff;}
+    // sweep the fuel flow (not the speed) through econCruise, so the optimizer and plan()
+    // share one performance model and the applied FL/FF reproduces the same TAS.
+    // The sweep runs from the long-range point to the high-speed point of the level: long-range
+    // is by definition the best practical range regime, so the optimizer picks between long-range
+    // and high-speed at each level and never recommends a fuel flow below the LR table point.
+    for(let pph=lrFF;;pph=Math.min(pph+10,hsFF)){
+      const e=econCruise(pph*LB2L,ft,W);
+      if(e){const gs=e.tas+wind;
+        if(gs>=60){const fpnm=e.ff/gs;
+          if(fpnm<bfpnm){bfpnm=fpnm;bV=e.tas;bff=e.ff;}}}
+      if(pph>=hsFF)break;
     }
     if(!bV)continue;
     const fuel=clbF+crzD*bfpnm+desF,time=clbT+crzD/(bV+wind)*60+desT;
