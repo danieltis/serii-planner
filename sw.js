@@ -1,7 +1,7 @@
 // SE-RII Flight Planner — service worker
-// Ao publicar uma versão nova da app, incrementa a versão abaixo (v2, v3, …)
-// para forçar a atualização da cache em todos os dispositivos.
-const CACHE = 'serii-planner-v4';
+// When publishing a new version of the app, bump the version below (v2, v3, …)
+// to force a cache refresh on every device.
+const CACHE = 'serii-planner-v5';
 const ASSETS = [
   './',
   './index.html',
@@ -25,8 +25,8 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Estratégia: stale-while-revalidate — responde já da cache (funciona offline,
-// mesmo em voo) e atualiza a cache em segundo plano quando há rede.
+// Strategy: stale-while-revalidate — answers straight from the cache (works
+// offline, even in flight) and refreshes the cache in the background when online.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(

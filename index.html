@@ -20,10 +20,14 @@
     --mono:"JetBrains Mono","SF Mono",Consolas,monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
   body{background:var(--bg);color:var(--txt);font:14.5px/1.5 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    padding:calc(22px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(84px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))}
+    margin:0;padding:0;display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
   html{-webkit-text-size-adjust:100%}
-  .wrap{max-width:1060px;margin:0 auto}
+  /* app shell: .wrap is the only scroller, the bottom nav stays pinned under it */
+  .wrap{flex:1 1 auto;min-height:0;width:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+    padding:calc(22px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) 22px calc(14px + env(safe-area-inset-left))}
+  .inner{max-width:1060px;margin:0 auto}
   header{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,var(--panel2),var(--panel));padding:18px 22px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
   header h1{font-size:19px;letter-spacing:.4px}
   header h1 span{color:var(--ok)}
@@ -41,8 +45,8 @@
   .f .sub{font-size:11px;color:var(--mut)}
   .r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .apname{font-size:11.5px;color:var(--ok);font-family:var(--mono);min-height:15px;margin-top:-6px;margin-bottom:8px}
-  /* sugestões de aeródromo — substituem o <datalist>, que o Safari iOS não mostra */
-  /* o dropdown ancora na linha dos dois inputs, para ocupar a largura do card */
+  /* airfield suggestions — they replace the <datalist>, which Safari iOS does not show */
+  /* the dropdown anchors to the row with both inputs, so it spans the card width */
   .r2.acwrap{position:relative}
   #dep::placeholder,#arr::placeholder{text-transform:none}
   .acbox{position:absolute;top:100%;left:0;right:0;z-index:80;margin-top:4px;
@@ -100,13 +104,13 @@
   .pt .v{font-family:var(--mono);font-size:17px;font-weight:600}
   .pt .l{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px;margin-top:1px}
 
-  /* ================= navegação por secções ================= */
+  /* ================= section navigation ================= */
   section[id^=view-]{display:none}
   section[id^=view-].on{display:block}
-  /* duas colunas ≥900px dentro de uma vista (mass, fuel) */
+  /* two columns ≥900px inside a view (mass, fuel) */
   .pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
   @media(max-width:900px){.pair{grid-template-columns:1fr}}
-  /* faixa sticky com o resumo, fora da home */
+  /* sticky summary bar, outside the home view */
   .sbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:10px;
     background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 13px;margin-bottom:13px}
   .sbar .t{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--blue);font-weight:700}
@@ -114,7 +118,7 @@
   .sbar .v b{color:var(--txt);font-weight:600}
   @media(max-width:520px){.sbar{flex-direction:column;align-items:flex-start;gap:3px;padding:8px 12px}
     .sbar .v{gap:11px;font-size:11.5px}}
-  /* menu da home */
+  /* home menu */
   .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .mcard{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;
     background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px;
@@ -125,14 +129,15 @@
   .mcard .v{font-family:var(--mono);font-size:11px;color:var(--dim);max-width:100%;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .mcard.wide{grid-column:1/-1}
-  /* sub-separadores (Takeoff / Landing) */
+  /* sub-tabs (Takeoff / Landing) */
   .seg{display:flex;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:4px;margin-bottom:13px}
   .seg button{flex:1;background:none;border:1px solid transparent;border-radius:7px;color:var(--dim);
     font:inherit;font-size:13px;font-weight:600;min-height:40px;cursor:pointer}
   .seg button.on{background:var(--panel);border-color:var(--line);color:var(--ok)}
-  /* barra inferior */
-  .nav{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;
-    background:var(--panel2);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+  /* bottom bar */
+  .nav{position:static;flex:none;z-index:60;display:flex;
+    background:var(--panel2);border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
   .nav button{flex:1;background:none;border:none;color:var(--mut);font:inherit;cursor:pointer;position:relative;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;padding:6px 2px}
   .nav button .ni{font-size:17px;line-height:1}
@@ -142,19 +147,21 @@
   .nav button.warn .dot{display:block;background:var(--warn)}
   .nav button.bad .dot{display:block;background:var(--bad)}
   @media(max-width:899px){#pdf_btn{display:none}}
-  /* fora da home, em telemóvel o #sbar já mostra o título: esconde o header */
+  /* outside home, on mobile #sbar already shows the title: hide the header */
   @media(max-width:899px){body.sub header{display:none}}
   @media(min-width:901px){#pdf_btn2{display:none}}
-  /* ---- folha de briefing para PDF/impressão ---- */
+  /* ---- briefing sheet for PDF/print ---- */
   @media print{
     :root{--bg:#fff;--panel:#fff;--panel2:#f4f6f8;--line:#c9d2da;--track:#e4e9ee;
       --txt:#111820;--dim:#4a5a68;--mut:#6b7a88;--ok:#0d7a4f;--warn:#a06a00;--bad:#b02a2a;--blue:#1560a8}
+    html,body{height:auto;overflow:visible;display:block}
     body{background:#fff;color:#111820;padding:0;font-size:11.5px}
-    .wrap{max-width:100%}
+    .wrap{overflow:visible;height:auto;padding:0}
+    .inner{max-width:100%}
     header{border:none;background:none;padding:0 0 6px;border-bottom:2px solid #111820;border-radius:0}
     body.sub header{display:flex !important}
     #pdf_btn,#pdf_btn2{display:none !important}
-    .cols,.inputs{display:none !important}   /* esconde os inputs */
+    .cols,.inputs{display:none !important}   /* hide the inputs */
     .nav,.sbar,.menu,.seg{display:none !important}
     section[id^=view-]{display:block !important}
     #perf_to,#perf_ld{display:block !important}
@@ -180,6 +187,7 @@
 </head>
 <body>
 <div class="wrap">
+<div class="inner">
 
 <header>
   <div>
@@ -192,7 +200,7 @@
 </header>
 <div id="print_head" style="display:none"></div>
 
-<!-- faixa compacta sticky (todas as vistas exceto a home) -->
+<!-- compact sticky bar (every view except home) -->
 <div class="sbar" id="sbar" style="display:none">
   <span class="t" id="s_title">—</span>
   <span class="v">
@@ -402,6 +410,7 @@
 </footer>
 
 </div>
+</div>
 
 <nav class="nav" id="navbar">
   <button type="button" data-view="home"><span class="ni">🏠</span><span class="nl">Home</span><span class="dot"></span></button>
@@ -414,9 +423,9 @@
 
 <script src="airports.js"></script>
 <script>
-// ================= DADOS =================
-// Tabela curada original — mantida só como recurso para códigos que não existam
-// em APTS_DB (airports.js). [nome, lat, lon, elevação ft, pista mais longa m]
+// ================= DATA =================
+// Original curated table — kept only as a fallback for codes that do not exist
+// in APTS_DB (airports.js). [name, lat, lon, elevation ft, longest runway m]
 const APTS_LEGACY={
  LPPT:["Lisbon",38.77,-9.13,374,3805],LPPR:["Porto",41.25,-8.68,228,3480],LPFR:["Faro",37.01,-7.97,24,2490],
  LPCO:["Coimbra",40.16,-8.47,587,920],LPVZ:["Viseu",40.73,-7.89,2060,1220],LPBJ:["Beja",38.08,-7.93,636,3450],
@@ -442,8 +451,8 @@ const APTS_LEGACY={
  EGBB:["Birmingham",52.45,-1.75,327,2600],EGCC:["Manchester",53.35,-2.27,257,3048],EGPH:["Edinburgh",55.95,-3.37,136,2556],
  EGPF:["Glasgow",55.87,-4.43,26,2665],EGAA:["Belfast",54.66,-6.22,268,2780],EGJJ:["Jersey",49.21,-2.20,277,1706],
  EGJB:["Guernsey",49.43,-2.60,336,1463],EIDW:["Dublin",53.42,-6.27,242,2637],EICK:["Cork",51.84,-8.49,502,2133],EINN:["Shannon",52.70,-8.92,46,3199],
- EDDF:["Frankfurt",50.03,8.57,364,4000],EDDM:["Munich",48.35,11.79,1487,4000],EDDB:["Berlim",52.37,13.51,157,3600],
- EDDH:["Hamburgo",53.63,9.99,53,3250],EDDL:["Düsseldorf",51.29,6.77,147,3000],EDDK:["Cologne",50.87,7.14,302,3815],
+ EDDF:["Frankfurt",50.03,8.57,364,4000],EDDM:["Munich",48.35,11.79,1487,4000],EDDB:["Berlin",52.37,13.51,157,3600],
+ EDDH:["Hamburg",53.63,9.99,53,3250],EDDL:["Düsseldorf",51.29,6.77,147,3000],EDDK:["Cologne",50.87,7.14,302,3815],
  EDDS:["Stuttgart",48.69,9.19,1276,3345],EDDN:["Nuremberg",49.50,11.08,1046,2700],
  EHAM:["Amsterdam",52.31,4.76,-11,3800],EHRD:["Rotterdam",51.96,4.44,-15,2200],EHEH:["Eindhoven",51.45,5.37,74,3000],
  EBBR:["Brussels",50.90,4.48,184,3638],EBAW:["Antwerp",51.19,4.46,39,1510],EBCI:["Charleroi",50.46,4.45,614,2550],ELLX:["Luxembourg",49.63,6.20,1234,4000],
@@ -468,7 +477,7 @@ const APTS_LEGACY={
 const FL_T=[200,240,280,290,310,330,350,370,410];
 const HS_FF=[1400,1260,1090,1050,960,890,820,760,660],HS_N1=[93,95.5,98.5,99.5,100,100,100,100,100],HS_TAS=[319,342,360,364,361,355,346,336,318];
 const LR_FF=[1040,940,840,820,770,720,680,640,580],LR_N1=[85,87,89,90,91,92.5,94,95,97],LR_TAS=[258,272,285,290,296,300,303,304,304];
-// subida (desde SL): FL -> [min, lb, NM]
+// climb (from SL): FL -> [min, lb, NM]
 const CLB_FL=[100,150,200,250,290,310,350,370,410];
 const CLB_T=[4,7,11,15,20,23,30,35,45],CLB_F=[150,230,330,420,500,550,650,720,850],CLB_D=[12,22,36,52,75,88,120,145,190];
 const CD0=0.0288,TSFC=0.695,KIND=0.05,S_FT2=278.5,A0=661.4786,P0=101325;
@@ -500,10 +509,10 @@ function gcNM(a,b){const R=3440.065,r=Math.PI/180;
  return 2*R*Math.asin(Math.sqrt(h));}
 function fmtT(min){if(!isFinite(min))return'–';const h=Math.floor(min/60),m=Math.round(min%60);return h+'h'+String(m).padStart(2,'0');}
 
-// ================= BASE DE AERÓDROMOS =================
-// APTS_DB (airports.js): CODE:[nome,município,país,lat,lon,elev|null,pista_m,superfície].
-// APTS mantém o formato interno antigo [nome,lat,lon,elev,pista] usado pelo resto do código;
-// elev===null e pista===0 significam "desconhecido" e não sobrescrevem os campos manuais.
+// ================= AIRFIELD DATABASE =================
+// APTS_DB (airports.js): CODE:[name,municipality,country,lat,lon,elev|null,runway_m,surface].
+// APTS keeps the old internal format [name,lat,lon,elev,runway] used by the rest of the code;
+// elev===null and runway===0 mean "unknown" and do not overwrite the manual fields.
 const APTS={},APTS_META={};
 if(typeof APTS_DB==='object'&&APTS_DB)for(const k in APTS_DB){const d=APTS_DB[k];
   APTS[k]=[d[0],d[3],d[4],d[5],d[6]];APTS_META[k]=[d[1],d[2],d[7]];}
@@ -511,15 +520,15 @@ for(const k in APTS_LEGACY)if(!APTS[k]){APTS[k]=APTS_LEGACY[k];APTS_META[k]=['',
 function aptWhere(code){const m=APTS_META[code]||['',''];return[m[0],m[1]].filter(Boolean).join(', ');}
 function aptLabel(code){const w=aptWhere(code);return code+' · '+APTS[code][0]+(w?' ('+w+')':'');}
 
-// ---- pesquisa (dropdown próprio: o Safari iOS ignora as sugestões do <datalist>) ----
+// ---- search (own dropdown: Safari iOS ignores the <datalist> suggestions) ----
 const acNorm=s=>(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const acEsc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-// '-' e '/' contam como separadores de palavra (Vila-Real, Lisbon/Cascais)
+// '-' and '/' count as word separators (Vila-Real, Lisbon/Cascais)
 const acNormW=s=>acNorm(s).replace(/[-\/]+/g,' ');
-// índice pré-computado: [código, códigoMinúsculas, nomeNormalizado, municípioNormalizado]
+// pre-computed index: [code, lowercaseCode, normalizedName, normalizedMunicipality]
 const AC_IDX=Object.keys(APTS).sort().map(c=>[c,c.toLowerCase(),acNormW(APTS[c][0]),acNormW((APTS_META[c]||[''])[0])]);
-// três níveis, cada um com no máximo 8 e sem duplicados, pela ordem:
-// (a) prefixo de código; (b) início de palavra no nome/município; (c) substring qualquer
+// three tiers, each capped at 8 and without duplicates, in this order:
+// (a) code prefix; (b) word start in the name/municipality; (c) any substring
 function acSearch(q){
   const n=acNormW(q.trim());
   if(n.length<2)return[];
@@ -555,11 +564,11 @@ function acShow(inp){
 function acPick(i){
   if(!acInput||!acList[i])return;
   const inp=acInput;inp.value=acList[i];acHide();
-  acSkip=true;                                          // não reabrir a caixa com o código escolhido
-  inp.dispatchEvent(new Event('input',{bubbles:true}));  // corre o plan()
+  acSkip=true;                                          // do not reopen the box with the chosen code
+  inp.dispatchEvent(new Event('input',{bubbles:true}));  // runs plan()
   acSkip=false;
 }
-// pointerdown + preventDefault: escolher não tira o foco ao input antes do clique
+// pointerdown + preventDefault: picking does not blur the input before the click
 acBox.addEventListener('pointerdown',e=>{
   const it=e.target.closest?e.target.closest('.acit'):null;
   if(!it)return;
@@ -588,7 +597,7 @@ function getPt(icaoId,llId,nameId,perfPrefix){
   const nameEl=document.getElementById(nameId), llEl=document.getElementById(llId);
   const a=APTS[code];
   if(a){
-    // elev===null / pista===0: dado desconhecido — não sobrescreve o que o piloto pôs
+    // elev===null / runway===0: unknown data — does not overwrite what the pilot entered
     const miss=[];
     if(a[3]===null)miss.push('elevation');
     if(!a[4])miss.push('runway');
@@ -604,7 +613,7 @@ function getPt(icaoId,llId,nameId,perfPrefix){
   return null;
 }
 const DIST_SUB_DEF='leave blank to compute from lat/lon · route factor still applies';
-// ponto sem coordenadas: só válido quando a distância é introduzida à mão
+// point without coordinates: only valid when the distance is entered by hand
 function manualPt(icaoId,nameId){
   const code=(document.getElementById(icaoId).value||'').trim().toUpperCase();
   document.getElementById(nameId).textContent=code?code+' · manual distance':'manual distance';
@@ -621,7 +630,7 @@ function meter(el,label,val,limit,unit){
    '<div class="foot">'+icon+' '+pct.toFixed(1)+' % of limit · '+fmtLB(val)+' / '+fmtLB(limit)+' lb'+(pct>100?' — EXCEEDED':'')+'</div>';
 }
 
-// ---- performance de aeródromo (integração calibrada, como no planner) ----
+// ---- airfield performance (calibrated integration, as in the planner) ----
 const KT2FPS=1.68781,T0S=4400,KV=2.728;
 function atmoAp(elev,qnh,oat){
   const pa=elev+(1013.25-qnh)*27;
@@ -647,7 +656,7 @@ function toRoll(W,elev,qnh,oat,hwKt){
 }
 function airportPerf(tow,lw){
   const M=0.3048;
-  // descolagem (origem)
+  // takeoff (origin)
   const dE=+document.getElementById('d_elev').value||0,dR=+document.getElementById('d_rwy').value||0;
   const dO=+document.getElementById('d_oat').value,dQ=+document.getElementById('d_qnh').value||1013.25,dH=Math.max(0,+document.getElementById('d_hw').value||0);
   const k=Math.sqrt(tow/11850);
@@ -666,7 +675,7 @@ function airportPerf(tow,lw){
   else if(bfl*M<=dR){tov.textContent='✓ GO — BFL '+Math.round(bfl*M)+' m ≤ runway '+dR+' m (margin '+Math.round(dR-bfl*M)+' m).';tov.style.borderLeftColor='var(--ok)';}
   else if(d35*M<=dR){tov.textContent='⚠ MARGINAL — lifts off ('+Math.round(d35*M)+' m) but no accelerate-stop protection (BFL '+Math.round(bfl*M)+' m > '+dR+' m).';tov.style.borderLeftColor='var(--warn)';}
   else{tov.textContent='✗ NO-GO — BFL '+Math.round(bfl*M)+' m > runway '+dR+' m. Reduce weight or use another runway.';tov.style.borderLeftColor='var(--bad)';}
-  // aterragem (destino)
+  // landing (destination)
   const aE=+document.getElementById('a_elev').value||0,aR=+document.getElementById('a_rwy').value||0;
   const aO=+document.getElementById('a_oat').value,aQ=+document.getElementById('a_qnh').value||1013.25,aH=Math.max(0,+document.getElementById('a_hw').value||0);
   const A=atmoAp(aE,aQ,isFinite(aO)?aO:15);
@@ -685,7 +694,7 @@ function airportPerf(tow,lw){
   else if(l50*M<=aR){ldv.textContent='⚠ Fits unfactored ('+Math.round(l50*M)+' m ≤ '+aR+' m); factored ×1.67 ('+Math.round(l60*M)+' m) exceeds — no margin for a long touchdown.';ldv.style.borderLeftColor='var(--warn)';}
   else{ldv.textContent='✗ Landing distance '+Math.round(l50*M)+' m > runway '+aR+' m at this weight.';ldv.style.borderLeftColor='var(--bad)';}
 }
-// ---- otimizador de altitude & power ----
+// ---- altitude & power optimizer ----
 function optimize(route,wind,W){
   let best=null,rows=[];
   for(let f=100;f<=410;f+=10){
@@ -742,7 +751,7 @@ function plan(){
   let dep=getPt('dep','dep_ll','dep_n','d'), arr=getPt('arr','arr_ll','arr_n','a');
   const distMan=+document.getElementById('dist_man').value||0;
   const distSub=document.getElementById('dist_sub');
-  // com distância manual não são precisas coordenadas
+  // with a manual distance no coordinates are needed
   if(distMan>0){
     if(!dep)dep=manualPt('dep','dep_n');
     if(!arr)arr=manualPt('arr','arr_n');
@@ -756,7 +765,7 @@ function plan(){
   const route=gc*(1+rf/100);
   const wind=+document.getElementById('wind').value||0;
   let fl=Math.min(410,Math.max(100,+document.getElementById('fl').value||350));
-  // pesos — entradas em kg, cálculo interno em lb
+  // weights — inputs in kg, internal calculation in lb
   const kgIn=id=>(+document.getElementById(id).value||0)*KG2LB;
   const bew=kgIn('bew')||6684;
   const crew=(+document.getElementById('crew').value||2)*(kgIn('crew_w')||190);
@@ -765,14 +774,14 @@ function plan(){
   const bags=kgIn('bags');
   const mtow=kgIn('mtow')||11850, mlw=kgIn('mlw')||11350;
   const cap=kgIn('cap')||3780;
-  // ecos em lb debaixo dos campos kg
-  [['bew',' · típico CE-500'],['crew_w',''],['pax_w',''],['bags',''],['mtow',''],['mlw',''],['taxi',''],['cap','']].forEach(([id,sfx])=>{
+  // lb echoes under the kg fields
+  [['bew',' · typical CE-500'],['crew_w',''],['pax_w',''],['bags',''],['mtow',''],['mlw',''],['taxi',''],['cap','']].forEach(([id,sfx])=>{
     const el=document.getElementById('lb_'+id);
     if(el)el.textContent='≈ '+fmtLB((+document.getElementById(id).value||0)*KG2LB)+' lb'+sfx;
   });
   const zfw=bew+crew+pax+bags;
   if(paxN>6)alerts.push(['warn','⚠ '+paxN+' passengers — the CE-500 is certified for 6 pax seats.']);
-  // perfil: reduzir FL se a rota for curta
+  // profile: lower the FL if the route is short
   let clbT,clbF,clbD,desT,desF,desD,crzD, flUsed=fl, reduced=false;
   function phases(f){
     clbT=lin(f,CLB_FL,CLB_T);clbF=lin(f,CLB_FL,CLB_F);clbD=lin(f,CLB_FL,CLB_D);
@@ -783,7 +792,7 @@ function plan(){
   while(crzD<15&&flUsed>100){flUsed-=10;reduced=true;phases(flUsed);}
   if(crzD<0){crzD=0;alerts.push(['bad','✗ Route too short even for FL100 — climb+descent ('+Math.round(clbD+desD)+' NM) exceed the route.']);}
   if(reduced)alerts.push(['warn','⚠ Route too short for FL'+fl+' — profile adjusted to FL'+flUsed+' (climb+descent need '+Math.round(clbD+desD)+' NM).']);
-  // cruzeiro
+  // cruise
   const reg=document.getElementById('reg').value;
   let tas,ff,n1,regName,ecNote='';
   if(reg==='hs'){tas=lin(flUsed,FL_T,HS_TAS);ff=lin(flUsed,FL_T,HS_FF);n1=lin(flUsed,FL_T,HS_N1);regName='High-speed';}
@@ -800,7 +809,7 @@ function plan(){
   const resvMin=+document.getElementById('resv').value||0, resvF=resvMin/60*HOLD_FF;
   const altnNM=+document.getElementById('altn').value||0, altnF=altnNM>0?altnNM*4.5+100:0;
   const trip=clbF+crzF+desF;
-  // slider de extra fuel: do min fuel da rota até MTOW / capacidade
+  // extra fuel slider: from the route min fuel up to MTOW / capacity
   const xEl=document.getElementById('xtra');
   const minBlock=taxi+trip+resvF+altnF;
   const maxBlock=Math.max(minBlock,Math.min(cap,mtow-zfw+taxi));
@@ -812,7 +821,7 @@ function plan(){
   const ramp=zfw+block, tow=ramp-taxi, lw=tow-trip;
   document.getElementById('xt_v').textContent='+'+fmtKG(xtra)+' kg · '+fmtLB(xtra)+' lb · '+Math.round(xtra*LB2L)+' L';
   document.getElementById('xt_sub').textContent='min fuel '+fmtKG(minBlock)+' kg → max '+fmtKG(maxBlock)+' kg ('+(maxBlock>=cap-1?'full tanks':'MTOW-limited')+')'+(maxExtra<=0?' — no margin for extra at this weight':'');
-  // sliders: readouts e sincronização
+  // sliders: readouts and sync
   document.getElementById('fl_v').textContent='FL'+flUsed+(reduced?' (requested FL'+fl+')':'');
   document.getElementById('ff_v').textContent=Math.round(ff*LB2L)+' L/h · '+Math.round(ff)+' lb/h';
   if(reg!=='ec'){document.getElementById('ec_lh').value=Math.round(ff*LB2L);
@@ -827,18 +836,18 @@ function plan(){
   // render
   const fT=clbT+crzT+desT, bT=fT+15;
   document.getElementById('t_time').textContent=fmtT(fT);
-  document.getElementById('t_time2').textContent='bloco '+fmtT(bT)+' (táxi incl.)';
+  document.getElementById('t_time2').textContent='block '+fmtT(bT)+' (taxi incl.)';
   document.getElementById('t_dist').textContent=Math.round(route)+' NM';
   document.getElementById('t_dist2').textContent=distMan>0
     ?'manual '+Math.round(gc)+' NM'+(rf>0?' +'+rf+'%':'')
     :'GC '+Math.round(gc)+' NM +'+rf+'%';
   document.getElementById('t_fuel').textContent=Math.round(block*LB2L)+' L';
   document.getElementById('t_fuel2').textContent=fmtKG(block)+' kg · '+fmtLB(block)+' lb';
-  const burn=taxi+trip; // fuel realmente queimado: táxi + subida + cruzeiro + descida
+  const burn=taxi+trip; // fuel actually burned: taxi + climb + cruise + descent
   const ppl=+document.getElementById('ppl').value||0, cost=burn*LB2L*ppl;
   document.getElementById('t_cost').textContent=ppl>0?Math.round(cost).toLocaleString('pt')+' €':'–';
-  document.getElementById('t_cost2').textContent=ppl>0&&route>0?Math.round(burn*LB2L)+' L queimados · '+(cost/route).toFixed(2)+' €/NM':'';
-  // resumo da faixa sticky + valores-chave do menu da home (só apresentação)
+  document.getElementById('t_cost2').textContent=ppl>0&&route>0?Math.round(burn*LB2L)+' L burned · '+(cost/route).toFixed(2)+' €/NM':'';
+  // sticky bar summary + key values of the home menu (presentation only)
   document.getElementById('s_time').textContent=fmtT(fT);
   document.getElementById('s_fuel').textContent=fmtKG(block)+' kg';
   document.getElementById('s_cost').textContent=ppl>0?Math.round(cost).toLocaleString('pt')+' €':'–';
@@ -883,11 +892,11 @@ function plan(){
   }
 }
 
-// ================= NAVEGAÇÃO (apresentação — não recalcula nada) =================
+// ================= NAVIGATION (presentation — recalculates nothing) =================
 const VIEWS=['home','route','mass','fuel','perf','plan'];
 const VTITLE={home:'Home',route:'Route',mass:'Mass & limits',fuel:'Fuel & cruise',perf:'Performance',plan:'Flight plan'};
 
-// mapeia o texto de um alerta à secção onde o utilizador o resolve
+// maps an alert's text to the section where the user fixes it
 function tagAlert(text){
   const s=String(text||'');
   if(/passenger|MTOW|MLW|landing weight/i.test(s))return 'mass';
@@ -896,7 +905,7 @@ function tagAlert(text){
   return null;
 }
 function updateBadges(list){
-  const st={route:0,mass:0,fuel:0,perf:0}; // 0 nenhum · 1 warn · 2 bad
+  const st={route:0,mass:0,fuel:0,perf:0}; // 0 none · 1 warn · 2 bad
   (list||[]).forEach(a=>{
     if(a[0]!=='warn'&&a[0]!=='bad')return;
     const sec=a[2]||tagAlert(a[1]);
@@ -931,7 +940,7 @@ function showView(v){
 function routeFromHash(scroll){
   const h=(location.hash||'').replace('#','');
   showView(VIEWS.indexOf(h)>=0?h:'home');
-  if(scroll)window.scrollTo(0,0);
+  if(scroll){const w=document.querySelector('.wrap');if(w)w.scrollTop=0;}
 }
 function goView(v){
   if(('#'+v)===location.hash)routeFromHash(true);
@@ -941,7 +950,7 @@ window.addEventListener('hashchange',()=>routeFromHash(true));
 document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>goView(b.dataset.go)));
 document.querySelectorAll('.nav button[data-view]').forEach(b=>b.addEventListener('click',()=>goView(b.dataset.view)));
 
-// sub-separadores da performance
+// performance sub-tabs
 function showPerf(t){
   document.getElementById('perf_to').style.display=(t==='to')?'':'none';
   document.getElementById('perf_ld').style.display=(t==='ld')?'':'none';
@@ -976,7 +985,7 @@ document.getElementById('o_apply').addEventListener('click',()=>{
 document.querySelectorAll('input,select').forEach(el=>{el.addEventListener('input',plan);el.addEventListener('change',plan);});
 plan();
 
-// vista inicial: hash → localStorage → home
+// initial view: hash → localStorage → home
 (function(){
   let v=(location.hash||'').replace('#','');
   if(VIEWS.indexOf(v)<0){try{v=localStorage.getItem('serii.view')||'home';}catch(e){v='home';}}
