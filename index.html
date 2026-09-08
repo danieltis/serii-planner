@@ -41,6 +41,25 @@
   .f .sub{font-size:11px;color:var(--mut)}
   .r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .apname{font-size:11.5px;color:var(--ok);font-family:var(--mono);min-height:15px;margin-top:-6px;margin-bottom:8px}
+  /* sugestões de aeródromo — substituem o <datalist>, que o Safari iOS não mostra */
+  /* o dropdown ancora na linha dos dois inputs, para ocupar a largura do card */
+  .r2.acwrap{position:relative}
+  #dep::placeholder,#arr::placeholder{text-transform:none}
+  .acbox{position:absolute;top:100%;left:0;right:0;z-index:80;margin-top:4px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+    max-height:min(46vh,320px);overflow-y:auto;-webkit-overflow-scrolling:touch;
+    box-shadow:0 12px 28px rgba(0,0,0,.5);display:none}
+  .acbox.on{display:block}
+  .acit{display:flex;flex-direction:column;justify-content:center;gap:2px;
+    min-height:44px;padding:7px 11px;border-bottom:1px solid var(--line);cursor:pointer}
+  .acit:last-child{border-bottom:none}
+  .acit.sel{background:var(--panel)}
+  @media(hover:hover){.acit:hover{background:var(--panel)}}
+  .acit .l1{display:flex;align-items:baseline;gap:8px;min-width:0}
+  .acit .c{flex:0 0 auto;font-family:var(--mono);font-size:13px;font-weight:600;color:var(--ok)}
+  .acit .n{flex:1 1 auto;min-width:0;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .acit .m{font-family:var(--mono);font-size:11px;color:var(--mut);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   /* results */
   .res{margin-top:16px}
   .alerts{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
@@ -154,6 +173,7 @@
     .f input,.f select{border:none;padding:0;background:none;font-size:12px}
     .bar .fill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .bar,.pt,.alert,.fill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .acbox{display:none !important}
     footer{page-break-inside:avoid}
   }
 </style>
@@ -213,13 +233,12 @@
 <section id="view-route">
   <div class="card inputs">
     <h2><span class="n">1</span>Route</h2>
-    <div class="r2">
-      <div class="f"><label>Origin (ICAO)</label><input id="dep" list="apts" value="LPCO" maxlength="4" style="text-transform:uppercase"></div>
-      <div class="f"><label>Destination (ICAO)</label><input id="arr" list="apts" value="LPFR" maxlength="4" style="text-transform:uppercase"></div>
+    <div class="r2 acwrap">
+      <div class="f ac"><label>Origin</label><input id="dep" value="LPCO" placeholder="ICAO or name" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="text-transform:uppercase"></div>
+      <div class="f ac"><label>Destination</label><input id="arr" value="LPFR" placeholder="ICAO or name" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="text-transform:uppercase"></div>
     </div>
     <div class="apname" id="dep_n"></div>
     <div class="apname" id="arr_n"></div>
-    <datalist id="apts"></datalist>
     <div class="r2">
       <div class="f"><label>Origin lat/lon</label><input id="dep_ll" placeholder="40.16,-8.47"></div>
       <div class="f"><label>Destination lat/lon</label><input id="arr_ll" placeholder="37.01,-7.97"></div>
@@ -393,10 +412,12 @@
   <button type="button" data-view="plan"><span class="ni">📋</span><span class="nl">Plan</span><span class="dot"></span></button>
 </nav>
 
+<script src="airports.js"></script>
 <script>
 // ================= DADOS =================
-// [nome, lat, lon, elevação ft, pista mais longa m] — elev/pista aproximados: confirmar no AIP
-const APTS={
+// Tabela curada original — mantida só como recurso para códigos que não existam
+// em APTS_DB (airports.js). [nome, lat, lon, elevação ft, pista mais longa m]
+const APTS_LEGACY={
  LPPT:["Lisbon",38.77,-9.13,374,3805],LPPR:["Porto",41.25,-8.68,228,3480],LPFR:["Faro",37.01,-7.97,24,2490],
  LPCO:["Coimbra",40.16,-8.47,587,920],LPVZ:["Viseu",40.73,-7.89,2060,1220],LPBJ:["Beja",38.08,-7.93,636,3450],
  LPCS:["Cascais",38.72,-9.36,325,1700],LPEV:["Evora",38.53,-7.89,807,1300],LPBG:["Bragança",41.86,-6.71,2278,1700],
@@ -479,18 +500,104 @@ function gcNM(a,b){const R=3440.065,r=Math.PI/180;
  return 2*R*Math.asin(Math.sqrt(h));}
 function fmtT(min){if(!isFinite(min))return'–';const h=Math.floor(min/60),m=Math.round(min%60);return h+'h'+String(m).padStart(2,'0');}
 
-// datalist
-const dl=document.getElementById('apts');
-Object.entries(APTS).forEach(([k,v])=>{const o=document.createElement('option');o.value=k;o.label=v[0];dl.appendChild(o);});
+// ================= BASE DE AERÓDROMOS =================
+// APTS_DB (airports.js): CODE:[nome,município,país,lat,lon,elev|null,pista_m,superfície].
+// APTS mantém o formato interno antigo [nome,lat,lon,elev,pista] usado pelo resto do código;
+// elev===null e pista===0 significam "desconhecido" e não sobrescrevem os campos manuais.
+const APTS={},APTS_META={};
+if(typeof APTS_DB==='object'&&APTS_DB)for(const k in APTS_DB){const d=APTS_DB[k];
+  APTS[k]=[d[0],d[3],d[4],d[5],d[6]];APTS_META[k]=[d[1],d[2],d[7]];}
+for(const k in APTS_LEGACY)if(!APTS[k]){APTS[k]=APTS_LEGACY[k];APTS_META[k]=['','',''];}
+function aptWhere(code){const m=APTS_META[code]||['',''];return[m[0],m[1]].filter(Boolean).join(', ');}
+function aptLabel(code){const w=aptWhere(code);return code+' · '+APTS[code][0]+(w?' ('+w+')':'');}
+
+// ---- pesquisa (dropdown próprio: o Safari iOS ignora as sugestões do <datalist>) ----
+const acNorm=s=>(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const acEsc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// '-' e '/' contam como separadores de palavra (Vila-Real, Lisbon/Cascais)
+const acNormW=s=>acNorm(s).replace(/[-\/]+/g,' ');
+// índice pré-computado: [código, códigoMinúsculas, nomeNormalizado, municípioNormalizado]
+const AC_IDX=Object.keys(APTS).sort().map(c=>[c,c.toLowerCase(),acNormW(APTS[c][0]),acNormW((APTS_META[c]||[''])[0])]);
+// três níveis, cada um com no máximo 8 e sem duplicados, pela ordem:
+// (a) prefixo de código; (b) início de palavra no nome/município; (c) substring qualquer
+function acSearch(q){
+  const n=acNormW(q.trim());
+  if(n.length<2)return[];
+  const pre=[],wrd=[],sub=[];
+  for(let i=0;i<AC_IDX.length;i++){
+    const e=AC_IDX[i];
+    if(e[1].indexOf(n)===0){if(pre.length<8)pre.push(e[0]);continue;}
+    if((' '+e[2]).indexOf(' '+n)>=0||(' '+e[3]).indexOf(' '+n)>=0){if(wrd.length<8)wrd.push(e[0]);continue;}
+    if(e[2].indexOf(n)>=0||e[3].indexOf(n)>=0){if(sub.length<8)sub.push(e[0]);}
+    if(pre.length>=8&&wrd.length>=8&&sub.length>=8)break;
+  }
+  return pre.concat(wrd,sub).slice(0,8);
+}
+const acBox=document.createElement('div');acBox.className='acbox';
+let acInput=null,acList=[],acSel=-1,acSkip=false;
+function acHide(){acBox.classList.remove('on');acBox.innerHTML='';acList=[];acSel=-1;acInput=null;}
+function acRender(){
+  acBox.innerHTML=acList.map((c,i)=>{
+    const w=aptWhere(c),rwy=APTS[c][4]?APTS[c][4]+' m':'runway ?';
+    return '<div class="acit'+(i===acSel?' sel':'')+'" data-i="'+i+'">'+
+      '<div class="l1"><span class="c">'+c+'</span><span class="n">'+acEsc(APTS[c][0])+'</span></div>'+
+      '<div class="m">'+acEsc((w?w+' · ':'')+rwy)+'</div></div>';
+  }).join('');
+}
+function acShow(inp){
+  const res=acSearch(inp.value);
+  if(!res.length){acHide();return;}
+  acInput=inp;acList=res;acSel=-1;
+  const wrap=(inp.closest?inp.closest('.acwrap'):null)||inp.parentNode;
+  if(acBox.parentNode!==wrap)wrap.appendChild(acBox);
+  acRender();acBox.classList.add('on');
+}
+function acPick(i){
+  if(!acInput||!acList[i])return;
+  const inp=acInput;inp.value=acList[i];acHide();
+  acSkip=true;                                          // não reabrir a caixa com o código escolhido
+  inp.dispatchEvent(new Event('input',{bubbles:true}));  // corre o plan()
+  acSkip=false;
+}
+// pointerdown + preventDefault: escolher não tira o foco ao input antes do clique
+acBox.addEventListener('pointerdown',e=>{
+  const it=e.target.closest?e.target.closest('.acit'):null;
+  if(!it)return;
+  e.preventDefault();acPick(+it.dataset.i);
+});
+['dep','arr'].forEach(id=>{
+  const inp=document.getElementById(id);
+  inp.addEventListener('input',()=>{if(acSkip){acSkip=false;return;}acShow(inp);});
+  inp.addEventListener('blur',()=>setTimeout(()=>{if(acInput===inp)acHide();},160));
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){acHide();return;}
+    if(!acList.length||acInput!==inp)return;
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+      e.preventDefault();
+      const d=e.key==='ArrowDown'?1:-1;
+      acSel=acSel<0?(d>0?0:acList.length-1):(acSel+d+acList.length)%acList.length;
+      acRender();
+      const sel=acBox.querySelector('.acit.sel');
+      if(sel&&sel.scrollIntoView)sel.scrollIntoView({block:'nearest'});
+    }else if(e.key==='Enter'&&acSel>=0){e.preventDefault();acPick(acSel);}
+  });
+});
 
 function getPt(icaoId,llId,nameId,perfPrefix){
   const code=(document.getElementById(icaoId).value||'').trim().toUpperCase();
   const nameEl=document.getElementById(nameId), llEl=document.getElementById(llId);
-  if(APTS[code]){nameEl.textContent=code+' · '+APTS[code][0];
-    if(llEl.dataset.for!==code){llEl.value=APTS[code][1]+','+APTS[code][2];llEl.dataset.for=code;
-      if(perfPrefix){document.getElementById(perfPrefix+'_elev').value=APTS[code][3];
-        document.getElementById(perfPrefix+'_rwy').value=APTS[code][4];}}
-    return[APTS[code][1],APTS[code][2],code];}
+  const a=APTS[code];
+  if(a){
+    // elev===null / pista===0: dado desconhecido — não sobrescreve o que o piloto pôs
+    const miss=[];
+    if(a[3]===null)miss.push('elevation');
+    if(!a[4])miss.push('runway');
+    nameEl.textContent=aptLabel(code)+(miss.length?' · '+miss.join(' and ')+' unknown — set it in Performance':'');
+    if(llEl.dataset.for!==code){llEl.value=a[1]+','+a[2];llEl.dataset.for=code;
+      if(perfPrefix){
+        if(a[3]!==null)document.getElementById(perfPrefix+'_elev').value=a[3];
+        if(a[4])document.getElementById(perfPrefix+'_rwy').value=a[4];}}
+    return[a[1],a[2],code];}
   const m=(llEl.value||'').split(',').map(Number);
   if(m.length===2&&isFinite(m[0])&&isFinite(m[1])){nameEl.textContent=code?code+' · manual coords':'manual coords';return[m[0],m[1],code||'???'];}
   nameEl.textContent=code?code+' · unknown — enter lat,lon':'';
@@ -641,7 +748,7 @@ function plan(){
     if(!arr)arr=manualPt('arr','arr_n');
   }
   const hdr=document.getElementById('hdr_route');
-  if(!dep||!arr){hdr.textContent='— → —';distSub.textContent=DIST_SUB_DEF;document.getElementById('alerts').innerHTML='<div class="alert warn">⚠ Set origin and destination (ICAO from the list or manual lat,lon), or enter a route distance.</div>';updateBadges([['warn','origin and destination']]);return;}
+  if(!dep||!arr){hdr.textContent='— → —';distSub.textContent=DIST_SUB_DEF;document.getElementById('alerts').innerHTML='<div class="alert warn">⚠ Set origin and destination (type an ICAO code or an airport/city name, or manual lat,lon), or enter a route distance.</div>';updateBadges([['warn','origin and destination']]);return;}
   hdr.textContent=dep[2]+' → '+arr[2];
   const gc=distMan>0?distMan:gcNM(dep,arr);
   distSub.textContent=distMan>0?'manual distance in use — clear to go back to lat/lon':DIST_SUB_DEF;

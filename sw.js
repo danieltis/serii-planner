@@ -1,10 +1,11 @@
 // SE-RII Flight Planner — service worker
 // Ao publicar uma versão nova da app, incrementa a versão abaixo (v2, v3, …)
 // para forçar a atualização da cache em todos os dispositivos.
-const CACHE = 'serii-planner-v3';
+const CACHE = 'serii-planner-v4';
 const ASSETS = [
   './',
   './index.html',
+  './airports.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',

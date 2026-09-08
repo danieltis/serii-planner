@@ -7,6 +7,8 @@ Uma só base de código (HTML/JS puro, sem build), instalável no ecrã inicial 
 | Ficheiro | Função |
 |---|---|
 | `index.html` | A app completa (motor de cálculo incluído) |
+| `airports.js` | Base de aeródromos europeus (gerada — ver abaixo) |
+| `tools/build_airports.py` | Gerador de `airports.js` a partir dos CSV da OurAirports |
 | `manifest.webmanifest` | Nome, ícones e modo standalone (o que a torna "instalável") |
 | `sw.js` | Service worker — cache offline (stale-while-revalidate) |
 | `icons/` | Ícones 192/512, maskable (Android) e apple-touch-icon (iOS) |
