@@ -291,7 +291,7 @@
         </select>
       </div>
       <div class="f"><label>Flight level — <span id="fl_v" style="color:var(--ok);font-family:var(--mono)">FL350</span></label>
-        <input type="range" id="fl" value="350" min="100" max="410" step="10"></div>
+        <input type="range" id="fl" value="350" min="200" max="410" step="10"></div>
       <div class="f"><label>Fuel flow — <span id="ff_v" style="color:var(--ok);font-family:var(--mono)">–</span></label>
         <input type="range" id="ec_lh" value="400" min="250" max="900" step="10">
         <span class="sub" id="ff_sub">drag to set a FF (switches mode to Economy)</span></div>
@@ -492,7 +492,7 @@
 // ================= APP IDENTITY =================
 // Release rule: version 1.N.x goes with the service-worker cache serii-planner-vN
 // (1.6.0 ↔ serii-planner-v6). When publishing, bump BOTH in the same commit.
-const APP={name:'SE-RII Flight Planner',version:'1.7.0',build:'2026-09-08',developer:'TI Systems',email:'info@tisystems.pt',repo:'https://github.com/danieltis/serii-planner'};
+const APP={name:'SE-RII Flight Planner',version:'1.8.0',build:'2026-09-08',developer:'TI Systems',email:'info@tisystems.pt',repo:'https://github.com/danieltis/serii-planner'};
 
 // ================= DATA =================
 // Original curated table — kept only as a fallback for codes that do not exist
@@ -782,7 +782,7 @@ function airportPerf(tow,lw){
 // ---- altitude & power optimizer ----
 function optimize(route,wind,W){
   let best=null,rows=[];
-  for(let f=100;f<=410;f+=10){
+  for(let f=200;f<=410;f+=10){
     const clbT=lin(f,CLB_FL,CLB_T),clbF=lin(f,CLB_FL,CLB_F),clbD=lin(f,CLB_FL,CLB_D);
     const desT=f*100/1800,desD=f*0.31,desF=desT/60*500;
     const crzD=route-clbD-desD;
@@ -854,7 +854,7 @@ function plan(){
   const rf=+document.getElementById('rf').value||0;
   const route=gc*(1+rf/100);
   const wind=+document.getElementById('wind').value||0;
-  let fl=Math.min(410,Math.max(100,+document.getElementById('fl').value||350));
+  let fl=Math.min(410,Math.max(200,+document.getElementById('fl').value||350));
   // weights — inputs in kg, internal calculation in lb
   const kgIn=id=>(+document.getElementById(id).value||0)*KG2LB;
   const bew=kgIn('bew')||6684;
@@ -879,8 +879,9 @@ function plan(){
     crzD=route-clbD-desD;
   }
   phases(flUsed);
-  while(crzD<15&&flUsed>100){flUsed-=10;reduced=true;phases(flUsed);}
-  if(crzD<0){crzD=0;alerts.push(['bad','✗ Route too short even for FL100 — climb+descent ('+Math.round(clbD+desD)+' NM) exceed the route.']);}
+  while(crzD<15&&flUsed>200){flUsed-=10;reduced=true;phases(flUsed);}
+  if(crzD<0){crzD=0;alerts.push(['bad','✗ Route too short even for FL200 — climb+descent ('+Math.round(clbD+desD)+' NM) exceed the route.']);}
+  else if(crzD<15)alerts.push(['warn','⚠ Very short cruise at FL200 — only '+Math.round(crzD)+' NM level; consider a lower level outside this planner.']);
   if(reduced)alerts.push(['warn','⚠ Route too short for FL'+fl+' — profile adjusted to FL'+flUsed+' (climb+descent need '+Math.round(clbD+desD)+' NM).']);
   // cruise
   const reg=document.getElementById('reg').value;
@@ -990,7 +991,7 @@ const VTITLE={home:'Home',route:'Route',mass:'Mass & limits',fuel:'Fuel & cruise
 function tagAlert(text){
   const s=String(text||'');
   if(/passenger|MTOW|MLW|landing weight/i.test(s))return 'mass';
-  if(/block fuel|capacity|L\/h|thrust-limited|level flight|too short|profile adjusted/i.test(s))return 'fuel';
+  if(/block fuel|capacity|L\/h|thrust-limited|level flight|too short|Very short cruise|profile adjusted/i.test(s))return 'fuel';
   if(/headwind|GS |origin|destination|wind/i.test(s))return 'route';
   return null;
 }
