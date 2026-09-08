@@ -28,7 +28,7 @@
   .wrap{flex:1 1 auto;min-height:0;width:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
     padding:calc(22px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) 22px calc(14px + env(safe-area-inset-left))}
   .inner{max-width:1060px;margin:0 auto}
-  header{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,var(--panel2),var(--panel));padding:18px 22px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  header{position:relative;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,var(--panel2),var(--panel));padding:18px 22px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
   header h1{font-size:19px;letter-spacing:.4px}
   header h1 span{color:var(--ok)}
   header p{color:var(--dim);font-size:12px}
@@ -146,7 +146,23 @@
   .nav button .dot{position:absolute;top:8px;left:50%;margin-left:9px;width:7px;height:7px;border-radius:50%;display:none}
   .nav button.warn .dot{display:block;background:var(--warn)}
   .nav button.bad .dot{display:block;background:var(--bad)}
-  @media(max-width:899px){#pdf_btn{display:none}}
+  /* small round header button (ⓘ → About) — visible at every width */
+  .ibtn{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;min-height:36px;
+    padding:0;background:transparent;color:var(--dim);border:1px solid var(--line);border-radius:50%;
+    font:inherit;font-size:17px;line-height:1;cursor:pointer}
+  .ibtn:hover{border-color:var(--ok);color:var(--ok)}
+  /* about view */
+  .about td{white-space:normal}
+  .about td:first-child{width:42%;white-space:nowrap}
+  .abnote{font-size:11.5px;color:var(--mut);margin-top:10px;line-height:1.55}
+  .about a{color:var(--ok)}
+  #ab_msg{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-top:8px;min-height:16px}
+  footer a{color:var(--dim)}
+  @media(max-width:899px){#pdf_btn{display:none}
+    /* keep the ⓘ pinned top-right instead of letting it wrap to its own line */
+    .hbtns{display:contents}
+    #about_btn{position:absolute;top:12px;right:12px;width:40px;height:40px;min-height:40px}
+    header h1,header p{padding-right:44px}}
   /* outside home, on mobile #sbar already shows the title: hide the header */
   @media(max-width:899px){body.sub header{display:none}}
   @media(min-width:901px){#pdf_btn2{display:none}}
@@ -159,11 +175,13 @@
     .wrap{overflow:visible;height:auto;padding:0}
     .inner{max-width:100%}
     header{border:none;background:none;padding:0 0 6px;border-bottom:2px solid #111820;border-radius:0}
+    header h1,header p{padding-right:0}
     body.sub header{display:flex !important}
-    #pdf_btn,#pdf_btn2{display:none !important}
+    #pdf_btn,#pdf_btn2,#about_btn{display:none !important}
     .cols,.inputs{display:none !important}   /* hide the inputs */
     .nav,.sbar,.menu,.seg{display:none !important}
     section[id^=view-]{display:block !important}
+    #view-about{display:none !important}   /* the About view never prints */
     #perf_to,#perf_ld{display:block !important}
     .pair{display:block}
     #print_head{display:block !important;font-family:var(--mono);font-size:11px;color:#4a5a68;
@@ -194,8 +212,9 @@
     <h1>SE-RII <span>FLIGHT PLANNER</span></h1>
     <p>Cessna Citation 500 · 2×JT15D-1 · calibrated performance model (FL290 ★ flight-verified)</p>
   </div>
-  <div style="display:flex;align-items:center;gap:14px">
+  <div class="hbtns" style="display:flex;align-items:center;gap:14px">
     <button id="pdf_btn" style="background:transparent;color:var(--ok);border:1px solid var(--ok);border-radius:8px;padding:7px 14px;font-weight:700;font-size:12.5px;cursor:pointer">🖨 Export PDF</button>
+    <button type="button" id="about_btn" class="ibtn" data-go="about" title="About" aria-label="About">ⓘ</button>
   </div>
 </header>
 <div id="print_head" style="display:none"></div>
@@ -405,8 +424,55 @@
   </div>
 </section>
 
+<!-- ===================== ABOUT ===================== -->
+<section id="view-about">
+  <div class="pair about">
+    <div class="card">
+      <h2>App</h2>
+      <table>
+        <tr><td>Name</td><td id="ab_name">–</td></tr>
+        <tr><td>Version</td><td id="ab_ver">–</td></tr>
+      </table>
+      <p class="abnote">Cessna Citation 500 · JT15D-1 performance model.</p>
+    </div>
+    <div class="card">
+      <h2>Developer</h2>
+      <table>
+        <tr><td>Built by</td><td id="ab_dev">–</td></tr>
+        <tr><td>Contact</td><td><a id="ab_mail" href="mailto:info@tisystems.pt">info@tisystems.pt</a></td></tr>
+        <tr><td>Source</td><td><a id="ab_repo" href="https://github.com/danieltis/serii-planner" target="_blank" rel="noopener">GitHub repository</a></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card about" style="margin-top:14px">
+    <h2>Status</h2>
+    <table>
+      <tr><td>Installed cache</td><td id="ab_cache">–</td></tr>
+      <tr><td>Service worker</td><td id="ab_sw">–</td></tr>
+      <tr><td>Connection</td><td id="ab_conn">–</td></tr>
+      <tr><td>Display mode</td><td id="ab_mode">–</td></tr>
+    </table>
+    <button type="button" id="ab_upd" style="margin-top:12px;width:100%;background:transparent;color:var(--ok);border:1px solid var(--ok);border-radius:8px;padding:10px;font-weight:700;font-size:13px;cursor:pointer">Check for updates</button>
+    <div id="ab_msg"></div>
+  </div>
+
+  <div class="card about" style="margin-top:14px">
+    <h2>Data</h2>
+    <table>
+      <tr><td>Aerodromes</td><td id="ab_apts">–</td></tr>
+    </table>
+    <p class="abnote">Performance model: calibrated on the FL290 HS point (flight-verified) and FL350 LR.</p>
+  </div>
+
+  <div class="card about" style="margin-top:14px">
+    <h2>Disclaimer</h2>
+    <p class="abnote" style="margin-top:0">Planning tool. All figures are estimates for pre-flight planning only — the AFM and the official documentation prevail.</p>
+  </div>
+</section>
+
 <footer>
-  SE-RII Flight Planner · Citation 500 (JT15D-1) · Great-circle distance + route factor · Typical climb/descent profiles; cruise from a model calibrated on the FL290 HS point (flight-verified) and FL350 LR · Weights: typical BEW 6,684 lb, MTOW 11,850 lb, MLW 11,350 lb, fuel 3,780 lb / 564 US gal · Planning tool — AFM and official navigation data prevail.
+  SE-RII Flight Planner · Citation 500 (JT15D-1) · Great-circle distance + route factor · Typical climb/descent profiles; cruise from a model calibrated on the FL290 HS point (flight-verified) and FL350 LR · Weights: typical BEW 6,684 lb, MTOW 11,850 lb, MLW 11,350 lb, fuel 3,780 lb / 564 US gal · Planning tool — AFM and official navigation data prevail. · <a href="#about">About</a>
 </footer>
 
 </div>
@@ -423,6 +489,11 @@
 
 <script src="airports.js"></script>
 <script>
+// ================= APP IDENTITY =================
+// Release rule: version 1.N.x goes with the service-worker cache serii-planner-vN
+// (1.6.0 ↔ serii-planner-v6). When publishing, bump BOTH in the same commit.
+const APP={name:'SE-RII Flight Planner',version:'1.6.0',build:'2026-09-08',developer:'TI Systems',email:'info@tisystems.pt',repo:'https://github.com/danieltis/serii-planner'};
+
 // ================= DATA =================
 // Original curated table — kept only as a fallback for codes that do not exist
 // in APTS_DB (airports.js). [name, lat, lon, elevation ft, longest runway m]
@@ -893,8 +964,8 @@ function plan(){
 }
 
 // ================= NAVIGATION (presentation — recalculates nothing) =================
-const VIEWS=['home','route','mass','fuel','perf','plan'];
-const VTITLE={home:'Home',route:'Route',mass:'Mass & limits',fuel:'Fuel & cruise',perf:'Performance',plan:'Flight plan'};
+const VIEWS=['home','route','mass','fuel','perf','plan','about'];
+const VTITLE={home:'Home',route:'Route',mass:'Mass & limits',fuel:'Fuel & cruise',perf:'Performance',plan:'Flight plan',about:'About'};
 
 // maps an alert's text to the section where the user fixes it
 function tagAlert(text){
@@ -935,6 +1006,7 @@ function showView(v){
   const sb=document.getElementById('sbar');
   if(v==='home')sb.style.display='none';
   else{sb.style.display='';document.getElementById('s_title').textContent=VTITLE[v]||'';}
+  if(v==='about')renderAbout();
   try{localStorage.setItem('serii.view',v);}catch(e){}
 }
 function routeFromHash(scroll){
@@ -949,6 +1021,74 @@ function goView(v){
 window.addEventListener('hashchange',()=>routeFromHash(true));
 document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>goView(b.dataset.go)));
 document.querySelectorAll('.nav button[data-view]').forEach(b=>b.addEventListener('click',()=>goView(b.dataset.view)));
+
+// ================= ABOUT VIEW =================
+function abSet(id,txt){const el=document.getElementById(id);if(el)el.textContent=txt;}
+// connection state — also refreshed by the online/offline events below
+function abConn(){abSet('ab_conn',navigator.onLine?'online':'offline');}
+window.addEventListener('online',abConn);
+window.addEventListener('offline',abConn);
+
+function renderAbout(){
+  abSet('ab_name',APP.name);
+  abSet('ab_ver','Version '+APP.version+' · build '+APP.build);
+  abSet('ab_dev',APP.developer);
+  const mail=document.getElementById('ab_mail');
+  if(mail){mail.href='mailto:'+APP.email;mail.textContent=APP.email;}
+  const repo=document.getElementById('ab_repo');
+  if(repo)repo.href=APP.repo;
+
+  // aerodrome database provenance (APTS_DB_META is emitted by tools/build_airports.py)
+  const meta=(typeof APTS_DB_META==='object'&&APTS_DB_META)?APTS_DB_META:null;
+  const n=(meta&&meta.count)||Object.keys(APTS).length;
+  abSet('ab_apts',n.toLocaleString('pt')+' ('+((meta&&meta.source)||'OurAirports')+
+    ', public domain'+(meta&&meta.generated?', generated '+meta.generated:'')+')');
+
+  // installed cache
+  if(typeof caches==='undefined'||!caches||!caches.keys)abSet('ab_cache','not available');
+  else{abSet('ab_cache','…');
+    caches.keys().then(ks=>{
+      const mine=ks.filter(k=>k.indexOf('serii-planner-')===0);
+      abSet('ab_cache',mine.length?mine.join(', '):'none yet');
+    }).catch(()=>abSet('ab_cache','not available'));}
+
+  // service worker
+  if(!('serviceWorker' in navigator))abSet('ab_sw','not registered');
+  else{abSet('ab_sw','…');
+    navigator.serviceWorker.getRegistration().then(reg=>{
+      if(!reg)abSet('ab_sw','not registered');
+      else if(reg.active)abSet('ab_sw','active');
+      else if(reg.installing||reg.waiting)abSet('ab_sw','installing');
+      else abSet('ab_sw','not registered');
+    }).catch(()=>abSet('ab_sw','not registered'));}
+
+  abConn();
+  const standalone=(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+  abSet('ab_mode',standalone?'installed app (standalone)':'browser tab');
+  abSet('ab_msg','');
+}
+
+// asks the service worker to re-fetch sw.js; a new version installs in the background
+function abCheckUpdate(){
+  if(!('serviceWorker' in navigator)){abSet('ab_msg','Service worker not available');return;}
+  if(!navigator.onLine){abSet('ab_msg','Offline — try again with a connection');return;}
+  abSet('ab_msg','Checking…');
+  navigator.serviceWorker.getRegistration().then(reg=>{
+    if(!reg){abSet('ab_msg','Service worker not available');return;}
+    let found=false;
+    const onFound=()=>{found=true;};
+    reg.addEventListener('updatefound',onFound);
+    return Promise.resolve(reg.update()).then(()=>{
+      reg.removeEventListener('updatefound',onFound);
+      if(found||reg.installing||reg.waiting)abSet('ab_msg','Update found — close and reopen the app to apply');
+      else abSet('ab_msg','You have the latest version');
+    },()=>{
+      reg.removeEventListener('updatefound',onFound);
+      abSet('ab_msg','Offline — try again with a connection');
+    });
+  }).catch(()=>abSet('ab_msg','Service worker not available'));
+}
+document.getElementById('ab_upd').addEventListener('click',abCheckUpdate);
 
 // performance sub-tabs
 function showPerf(t){

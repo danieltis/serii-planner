@@ -42,7 +42,11 @@ com o service worker funciona offline (iOS 16.4+).
 1. Substitui o `index.html` pela versão nova (commit no GitHub / novo deploy).
 2. **Importante:** em `sw.js`, muda `serii-planner-v1` para `v2` (e assim
    sucessivamente) — é isso que diz aos telemóveis para irem buscar a versão nova.
-3. Nos dispositivos, basta abrir a app duas vezes: a primeira descarrega em
+3. **Regra de versões:** a versão da app `1.N.x` (constante `APP` no `index.html`,
+   mostrada na vista *About*) acompanha a cache do service worker `serii-planner-vN`
+   — p. ex. `1.6.0` ↔ `serii-planner-v6`. Ao publicar, incrementam-se as duas no
+   mesmo commit.
+4. Nos dispositivos, basta abrir a app duas vezes: a primeira descarrega em
    segundo plano, a segunda já mostra a nova versão.
 
 ## Notas

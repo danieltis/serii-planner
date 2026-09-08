@@ -160,6 +160,11 @@ def main(argv):
             )
         )
     out.write("};\n")
+    # machine-readable provenance, read by the About view in index.html
+    out.write(
+        'const APTS_DB_META={source:"OurAirports",generated:"%s",count:%d};\n'
+        % (today, len(entries))
+    )
     sys.stderr.write("%d aerodromes\n" % len(entries))
     return 0
 

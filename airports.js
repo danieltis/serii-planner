@@ -2969,3 +2969,4 @@ UWWG:["Bezymyanka Airfield","Samara","RU",53.22,50.325,135,3500,"CON"],
 UWWW:["Kurumoch International","Samara","RU",53.5049,50.1643,477,3001,"CON"],
 XRMU:["Khankala Air Base","Grozny","RU",43.2981,45.7841,548,2502,"ASPH"],
 };
+const APTS_DB_META={source:"OurAirports",generated:"2026-09-08",count:2966};
