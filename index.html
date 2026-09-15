@@ -210,7 +210,7 @@
 <header>
   <div>
     <h1>SE-RII <span>FLIGHT PLANNER</span></h1>
-    <p>Cessna Citation 500 · 2×JT15D-1 · calibrated performance model (FL290 ★ flight-verified)</p>
+    <p>Cessna Citation 500 · 2×JT15D-1 · calibrated performance model (FL290 ★ + two flights at FL380/390 flight-verified)</p>
   </div>
   <div class="hbtns" style="display:flex;align-items:center;gap:14px">
     <button id="pdf_btn" style="background:transparent;color:var(--ok);border:1px solid var(--ok);border-radius:8px;padding:7px 14px;font-weight:700;font-size:12.5px;cursor:pointer">🖨 Export PDF</button>
@@ -463,7 +463,7 @@
       <tr><td>Aerodromes</td><td id="ab_apts">–</td></tr>
       <tr><td>Weight &amp; balance</td><td>BEW 7,324 lb / 3,322 kg · CG 261.90 in (34.97 % MAC) · weighed 05 Jul 2024, Elite Jet Service (S/N 500-0319)</td></tr>
     </table>
-    <p class="abnote">Performance model: calibrated on the FL290 HS point (flight-verified) and FL350 LR.</p>
+    <p class="abnote">Performance model: calibrated on the FL290 HS point and on two SE-RII flights of 26 Aug 2024 at FL380/FL390 (MCT) — high-speed trip fuel within ±1 % of the two flights (taxi excluded); long-range above FL310 extrapolated.</p>
   </div>
 
   <div class="card about" style="margin-top:14px">
@@ -473,7 +473,7 @@
 </section>
 
 <footer>
-  SE-RII Flight Planner · Citation 500 (JT15D-1) · Great-circle distance + route factor · Typical climb/descent profiles; cruise from a model calibrated on the FL290 HS point (flight-verified) and FL350 LR · Weights: SE-RII BEW 7,324 lb (weighed 05 Jul 2024), MTOW 11,850 lb, MLW 11,350 lb, fuel 3,780 lb / 564 US gal · Planning tool — AFM and official navigation data prevail. · <a href="#about">About</a>
+  SE-RII Flight Planner · Citation 500 (JT15D-1) · Great-circle distance + route factor · Typical climb/descent profiles; cruise from a model calibrated on the FL290 ★ + two flights at FL380/390 flight-verified, long-range above FL310 extrapolated · Weights: SE-RII BEW 7,324 lb (weighed 05 Jul 2024), MTOW 11,850 lb, MLW 11,350 lb, fuel 3,780 lb / 564 US gal · Planning tool — AFM and official navigation data prevail. · <a href="#about">About</a>
 </footer>
 
 </div>
@@ -493,7 +493,7 @@
 // ================= APP IDENTITY =================
 // Release rule: version 1.N.x goes with the service-worker cache serii-planner-vN
 // (1.6.0 ↔ serii-planner-v6). When publishing, bump BOTH in the same commit.
-const APP={name:'SE-RII Flight Planner',version:'1.9.0',build:'2026-09-08',developer:'TI Systems',email:'info@tisystems.pt',repo:'https://github.com/danieltis/serii-planner'};
+const APP={name:'SE-RII Flight Planner',version:'1.10.0',build:'2026-09-15',developer:'TI Systems',email:'info@tisystems.pt',repo:'https://github.com/danieltis/serii-planner'};
 
 // ================= DATA =================
 // Original curated table — kept only as a fallback for codes that do not exist
@@ -546,12 +546,16 @@ const APTS_LEGACY={
  GMMX:["Marrakesh",31.61,-8.03,1545,3100],GMTT:["Tangier",35.73,-5.92,62,3500]
 };
 // perf: [FL, HS_ff, HS_n1, HS_tas, LR_ff, LR_n1, LR_tas]
+// Calibrated 15 Sep 2026 on two SE-RII flights of 26 Aug 2024 (EDLN–LEPA FL380, LEPA–EDDH FL390,
+// both MCT): FL290 point flight-verified earlier; FL310+ high-speed fuel flow, TAS and climb fuel
+// fitted to real burn (within ±2 %); long-range above FL310 extrapolated, no flight data.
+// Real block burn 2 800 / 2 950 lb less ~150 lb taxi each (27–29 min ground); flight time 2:53 / 3:06.
 const FL_T=[200,240,280,290,310,330,350,370,410];
-const HS_FF=[1400,1260,1090,1050,960,890,820,760,660],HS_N1=[93,95.5,98.5,99.5,100,100,100,100,100],HS_TAS=[319,342,360,364,361,355,346,336,318];
-const LR_FF=[1040,940,840,820,770,720,680,640,580],LR_N1=[85,87,89,90,91,92.5,94,95,97],LR_TAS=[258,272,285,290,296,300,303,304,304];
+const HS_FF=[1400,1260,1090,1050,960,945,935,925,897],HS_N1=[93,95.5,98.5,99.5,100,100,100,100,100],HS_TAS=[319,342,360,364,358,350,340,328,308];
+const LR_FF=[1040,940,840,820,770,760,750,740,720],LR_N1=[85,87,89,90,91,92.5,94,95,97],LR_TAS=[258,272,285,290,296,300,303,304,304];
 // climb (from SL): FL -> [min, lb, NM]
 const CLB_FL=[100,150,200,250,290,310,350,370,410];
-const CLB_T=[4,7,11,15,20,23,30,35,45],CLB_F=[150,230,330,420,500,550,650,720,850],CLB_D=[12,22,36,52,75,88,120,145,190];
+const CLB_T=[4,7,11,15,20,23,30,35,45],CLB_F=[150,230,330,420,500,635,750,830,980],CLB_D=[12,22,36,52,75,88,120,145,190];
 const CD0=0.0288,TSFC=0.695,KIND=0.05,S_FT2=278.5,A0=661.4786,P0=101325;
 const HOLD_FF=800; // lb/h holding
 const L2LB=0.8*2.20462, LB2L=1/L2LB, KG2LB=2.20462, LB2KG=1/2.20462;
