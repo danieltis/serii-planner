@@ -398,7 +398,7 @@
   <div class="pair">
     <div class="card inputs">
       <h2><span class="n">2</span>Mass &amp; limits <span style="color:var(--dim);font-size:10px;text-transform:none">— inputs in kg</span></h2>
-      <div class="f"><label>Basic empty weight (kg)</label><input type="number" id="bew" value="3032" step="5"><span class="sub" id="lb_bew">≈ 6,684 lb · typical CE-500, use your weighing report</span></div>
+      <div class="f"><label>Basic empty weight (kg)</label><input type="number" id="bew" value="3322" step="5"><span class="sub" id="lb_bew">≈ 7,324 lb · SE-RII weighed 05 Jul 2024</span></div>
       <div class="r2">
         <div class="f"><label>Crew</label><input type="number" id="crew" value="2" min="1" max="2"></div>
         <div class="f"><label>Weight per crew (kg)</label><input type="number" id="crew_w" value="86" step="1"><span class="sub" id="lb_crew_w"></span></div>
@@ -461,6 +461,7 @@
     <h2>Data</h2>
     <table>
       <tr><td>Aerodromes</td><td id="ab_apts">–</td></tr>
+      <tr><td>Weight &amp; balance</td><td>BEW 7,324 lb / 3,322 kg · CG 261.90 in (34.97 % MAC) · weighed 05 Jul 2024, Elite Jet Service (S/N 500-0319)</td></tr>
     </table>
     <p class="abnote">Performance model: calibrated on the FL290 HS point (flight-verified) and FL350 LR.</p>
   </div>
@@ -472,7 +473,7 @@
 </section>
 
 <footer>
-  SE-RII Flight Planner · Citation 500 (JT15D-1) · Great-circle distance + route factor · Typical climb/descent profiles; cruise from a model calibrated on the FL290 HS point (flight-verified) and FL350 LR · Weights: typical BEW 6,684 lb, MTOW 11,850 lb, MLW 11,350 lb, fuel 3,780 lb / 564 US gal · Planning tool — AFM and official navigation data prevail. · <a href="#about">About</a>
+  SE-RII Flight Planner · Citation 500 (JT15D-1) · Great-circle distance + route factor · Typical climb/descent profiles; cruise from a model calibrated on the FL290 HS point (flight-verified) and FL350 LR · Weights: SE-RII BEW 7,324 lb (weighed 05 Jul 2024), MTOW 11,850 lb, MLW 11,350 lb, fuel 3,780 lb / 564 US gal · Planning tool — AFM and official navigation data prevail. · <a href="#about">About</a>
 </footer>
 
 </div>
@@ -492,7 +493,7 @@
 // ================= APP IDENTITY =================
 // Release rule: version 1.N.x goes with the service-worker cache serii-planner-vN
 // (1.6.0 ↔ serii-planner-v6). When publishing, bump BOTH in the same commit.
-const APP={name:'SE-RII Flight Planner',version:'1.8.0',build:'2026-09-08',developer:'TI Systems',email:'info@tisystems.pt',repo:'https://github.com/danieltis/serii-planner'};
+const APP={name:'SE-RII Flight Planner',version:'1.9.0',build:'2026-09-08',developer:'TI Systems',email:'info@tisystems.pt',repo:'https://github.com/danieltis/serii-planner'};
 
 // ================= DATA =================
 // Original curated table — kept only as a fallback for codes that do not exist
@@ -809,10 +810,27 @@ function optimize(route,wind,W){
   }
   return{best,rows};
 }
+const OPT_TILES=['o_fl','o_ff','o_tas','o_n1','o_fuel','o_dt'];
+// the Apply button must never carry over the previous route's numbers
+function setOptApply(on){
+  const b=document.getElementById('o_apply');
+  if(!b)return;
+  b.disabled=!on;
+  b.style.opacity=on?'':'.5';
+  b.style.cursor=on?'pointer':'default';
+}
 function renderOpt(route,wind,currentTrip){
   const{best,rows}=optimize(route,wind,10500);
   const bars=document.getElementById('o_bars');
-  if(!best){bars.innerHTML='';document.getElementById('o_save').textContent='Route too short to optimize.';return;}
+  if(!best){
+    bars.innerHTML='';
+    // clear the tiles as well, otherwise they keep showing the previous route's optimum
+    OPT_TILES.forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='–';});
+    document.getElementById('o_save').textContent='Route too short to optimize.';
+    setOptApply(false);
+    return;
+  }
+  setOptApply(true);
   const lrN1v=lin(best.fl,FL_T,LR_N1),lrFFv=lin(best.fl,FL_T,LR_FF),hsN1v=lin(best.fl,FL_T,HS_N1),hsFFv=lin(best.fl,FL_T,HS_FF);
   const n1=Math.min(100,lrN1v+(best.ff-lrFFv)*(hsN1v-lrN1v)/(hsFFv-lrFFv));
   document.getElementById('o_fl').textContent='FL'+best.fl;
@@ -857,7 +875,7 @@ function plan(){
   let fl=Math.min(410,Math.max(200,+document.getElementById('fl').value||350));
   // weights — inputs in kg, internal calculation in lb
   const kgIn=id=>(+document.getElementById(id).value||0)*KG2LB;
-  const bew=kgIn('bew')||6684;
+  const bew=kgIn('bew')||7324;
   const crew=(+document.getElementById('crew').value||2)*(kgIn('crew_w')||190);
   const paxN=+document.getElementById('pax').value||0;
   const pax=paxN*(kgIn('pax_w')||185);
@@ -865,7 +883,7 @@ function plan(){
   const mtow=kgIn('mtow')||11850, mlw=kgIn('mlw')||11350;
   const cap=kgIn('cap')||3780;
   // lb echoes under the kg fields
-  [['bew',' · typical CE-500'],['crew_w',''],['pax_w',''],['bags',''],['mtow',''],['mlw',''],['taxi',''],['cap','']].forEach(([id,sfx])=>{
+  [['bew',' · SE-RII weighed 05 Jul 2024'],['crew_w',''],['pax_w',''],['bags',''],['mtow',''],['mlw',''],['taxi',''],['cap','']].forEach(([id,sfx])=>{
     const el=document.getElementById('lb_'+id);
     if(el)el.textContent='≈ '+fmtLB((+document.getElementById(id).value||0)*KG2LB)+' lb'+sfx;
   });
