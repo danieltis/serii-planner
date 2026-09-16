@@ -493,7 +493,7 @@
 // ================= APP IDENTITY =================
 // Release rule: version 1.N.x goes with the service-worker cache serii-planner-vN
 // (1.6.0 ↔ serii-planner-v6). When publishing, bump BOTH in the same commit.
-const APP={name:'SE-RII Flight Planner',version:'1.10.0',build:'2026-09-15',developer:'TI Systems',email:'info@tisystems.pt',repo:'https://github.com/danieltis/serii-planner'};
+const APP={name:'SE-RII Flight Planner',version:'1.11.0',build:'2026-09-16',developer:'TI Systems',email:'info@tisystems.pt',repo:'https://github.com/danieltis/serii-planner'};
 
 // ================= DATA =================
 // Original curated table — kept only as a fallback for codes that do not exist
@@ -750,10 +750,10 @@ function airportPerf(tow,lw){
   const dE=+document.getElementById('d_elev').value||0,dR=+document.getElementById('d_rwy').value||0;
   const dO=+document.getElementById('d_oat').value,dQ=+document.getElementById('d_qnh').value||1013.25,dH=Math.max(0,+document.getElementById('d_hw').value||0);
   const k=Math.sqrt(tow/11850);
-  // CE-500 simplified-criteria card anchors: 100/101/108 @ 11,850 lb, sqrt-weight scaled (matches 96/97/104 @ 11,000)
-  document.getElementById('p_v1').textContent=(100*k).toFixed(0);
-  document.getElementById('p_vr').textContent=(101*k).toFixed(0);
-  document.getElementById('p_v2').textContent=(108*k).toFixed(0);
+  // Takeoff speeds anchored on operator OFP figures for SE-RII (V1 108 / VR 108 / V2 114 at 11,454–11,848 lb, flaps 15), sqrt-weight scaled, floors 95/95/100.
+  document.getElementById('p_v1').textContent=Math.max(95,108*k).toFixed(0);
+  document.getElementById('p_vr').textContent=Math.max(95,108*k).toFixed(0);
+  document.getElementById('p_v2').textContent=Math.max(100,114*k).toFixed(0);
   document.getElementById('p_dep_w').textContent='· TOW '+fmtKG(tow)+' kg / '+fmtLB(tow)+' lb';
   const gr=toRoll(tow,dE,dQ,isFinite(dO)?dO:15,dH);
   const d35=gr/0.80,bfl=3600*(d35/2930);
