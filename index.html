@@ -493,7 +493,7 @@
 // ================= APP IDENTITY =================
 // Release rule: version 1.N.x goes with the service-worker cache serii-planner-vN
 // (1.6.0 ↔ serii-planner-v6). When publishing, bump BOTH in the same commit.
-const APP={name:'SE-RII Flight Planner',version:'1.11.0',build:'2026-09-16',developer:'TI Systems',email:'info@tisystems.pt',repo:'https://github.com/danieltis/serii-planner'};
+const APP={name:'SE-RII Flight Planner',version:'1.12.0',build:'2026-09-18',developer:'TI Systems',email:'info@tisystems.pt',repo:'https://github.com/danieltis/serii-planner'};
 
 // ================= DATA =================
 // Original curated table — kept only as a fallback for codes that do not exist
@@ -730,9 +730,28 @@ function atmoAp(elev,qnh,oat){
   return{pa,rho,sigma:rho/1.225,da:pa+118.8*(oat-isaT)};
 }
 function vs40W(W){return 88*Math.sqrt(W/11350);}
+// Takeoff speeds anchored on operator OFP figures for SE-RII (V1 108 / VR 108 / V2 114 at
+// 11,454-11,848 lb, flaps 15), sqrt-weight scaled, floors 95/95/100. Single source of truth: both
+// the takeoff card and the ground-roll integration below take their speeds from here.
+function toSpeeds(W){
+  const k=Math.sqrt(W/11850);
+  return{v1:Math.max(95,108*k),vr:Math.max(95,108*k),v2:Math.max(100,114*k)};
+}
+// Lift-off speed used by the takeoff integration, as a fraction of the VR shown on the card.
+// The published anchor (2,930 ft to 35 ft and 3,600 ft BFL at 11,850 lb / SL / ISA) was built with
+// V_LOF = 1.1*Vs(40 deg)*1.07 = 105.8 KIAS at MTOW, while the card shows VR = 108 KIAS. Freezing the
+// ratio of the two at MTOW keeps that anchor exact, and because both speeds scale with sqrt(W) every
+// distance is left as it was — except below ~9,170 lb, where VR is held at its 95 kt floor and the
+// roll now correctly lengthens to match the higher rotation speed the card actually calls for.
+const TO_CAL=1.1*vs40W(11850)*1.07/toSpeeds(11850).vr;
+// Touchdown speed for the landing roll, as a fraction of the Vref shown on the card. The published
+// MLW / SL / ISA landing figures were built with V_TD = 1.15*Vs(40 deg), i.e. 1.15/1.3 of Vref, so
+// freezing that ratio reproduces them exactly while keeping a single source for the speeds.
+const LDG_CAL=1.15/1.3;
 function toRoll(W,elev,qnh,oat,hwKt){
   const{rho,sigma}=atmoAp(elev,qnh,oat);
-  const vlof=1.1*vs40W(W)*1.07*KT2FPS/Math.sqrt(sigma);
+  // Rotate/lift off at the card's VR, corrected to TAS in ft/s and scaled by the anchor ratio above.
+  const vlof=TO_CAL*toSpeeds(W).vr*KT2FPS/Math.sqrt(sigma);
   const hw=hwKt*KT2FPS;
   let V=hw,s=0;const dt=0.05,rslug=rho*0.0019403;
   for(let i=0;i<20000&&V<vlof;i++){
@@ -749,11 +768,10 @@ function airportPerf(tow,lw){
   // takeoff (origin)
   const dE=+document.getElementById('d_elev').value||0,dR=+document.getElementById('d_rwy').value||0;
   const dO=+document.getElementById('d_oat').value,dQ=+document.getElementById('d_qnh').value||1013.25,dH=Math.max(0,+document.getElementById('d_hw').value||0);
-  const k=Math.sqrt(tow/11850);
-  // Takeoff speeds anchored on operator OFP figures for SE-RII (V1 108 / VR 108 / V2 114 at 11,454–11,848 lb, flaps 15), sqrt-weight scaled, floors 95/95/100.
-  document.getElementById('p_v1').textContent=Math.max(95,108*k).toFixed(0);
-  document.getElementById('p_vr').textContent=Math.max(95,108*k).toFixed(0);
-  document.getElementById('p_v2').textContent=Math.max(100,114*k).toFixed(0);
+  const spd=toSpeeds(tow);
+  document.getElementById('p_v1').textContent=spd.v1.toFixed(0);
+  document.getElementById('p_vr').textContent=spd.vr.toFixed(0);
+  document.getElementById('p_v2').textContent=spd.v2.toFixed(0);
   document.getElementById('p_dep_w').textContent='· TOW '+fmtKG(tow)+' kg / '+fmtLB(tow)+' lb';
   const gr=toRoll(tow,dE,dQ,isFinite(dO)?dO:15,dH);
   const d35=gr/0.80,bfl=3600*(d35/2930);
@@ -770,7 +788,8 @@ function airportPerf(tow,lw){
   const aO=+document.getElementById('a_oat').value,aQ=+document.getElementById('a_qnh').value||1013.25,aH=Math.max(0,+document.getElementById('a_hw').value||0);
   const A=atmoAp(aE,aQ,isFinite(aO)?aO:15);
   const vs0=vs40W(lw),vref=1.3*vs0,vapp=vref+5;
-  const vtd=Math.max(0,1.15*vs0*KT2FPS/Math.sqrt(A.sigma)-aH*KT2FPS);
+  // Landing roll flown from the same Vref shown above (see LDG_CAL), corrected to TAS and headwind.
+  const vtd=Math.max(0,LDG_CAL*vref*KT2FPS/Math.sqrt(A.sigma)-aH*KT2FPS);
   const lgr=vtd*vtd/(2*0.30*32.174),l50=lgr+950,l60=l50*1.667;
   document.getElementById('p_arr_w').textContent='· LW '+fmtKG(lw)+' kg / '+fmtLB(lw)+' lb';
   document.getElementById('p_vref').textContent=vref.toFixed(0);
