@@ -166,6 +166,27 @@
   /* outside home, on mobile #sbar already shows the title: hide the header */
   @media(max-width:899px){body.sub header{display:none}}
   @media(min-width:901px){#pdf_btn2{display:none}}
+  /* TEMP-CAMERA-TEST start */
+  /* temporary camera/video capture test view — remove after the test */
+  #view-camera .sub{font-size:11.5px;color:var(--mut);line-height:1.55}
+  #view-camera .card{margin-top:14px}
+  .cambtn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 14px;
+    background:transparent;color:var(--ok);border:1px solid var(--ok);border-radius:8px;
+    font:inherit;font-weight:700;font-size:13px;text-decoration:none;text-align:center;cursor:pointer;-webkit-appearance:none;appearance:none}
+  .cambtn.pri{background:var(--ok);color:#0c1a13;border-color:var(--ok)}
+  .cambtn.recon{background:var(--bad);color:#fff;border-color:var(--bad)}
+  .cambtn:disabled{opacity:.4;cursor:default}
+  .cambtn[hidden]{display:none}
+  .camrow{display:flex;flex-wrap:wrap;gap:8px}
+  .camrow .cambtn{flex:1 1 120px}
+  .cammedia{display:block;width:100%;border-radius:8px;background:#000;max-height:60vh;object-fit:contain;margin-top:12px}
+  .cammedia[hidden]{display:none}
+  .caminfo{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-top:6px;word-break:break-all}
+  .caminfo.bad{color:var(--bad)}
+  .camsave{width:100%;margin-top:8px}
+  #cam_status{font-family:var(--mono);font-size:12px;color:var(--dim);margin-top:10px;min-height:16px}
+  #cam_status.bad{color:var(--bad)}
+  /* TEMP-CAMERA-TEST end */
   /* ---- briefing sheet for PDF/print ---- */
   @media print{
     :root{--bg:#fff;--panel:#fff;--panel2:#f4f6f8;--line:#c9d2da;--track:#e4e9ee;
@@ -182,6 +203,9 @@
     .nav,.sbar,.menu,.seg{display:none !important}
     section[id^=view-]{display:block !important}
     #view-about{display:none !important}   /* the About view never prints */
+    /* TEMP-CAMERA-TEST start */
+    #view-camera{display:none !important}
+    /* TEMP-CAMERA-TEST end */
     #perf_to,#perf_ld{display:block !important}
     .pair{display:block}
     #print_head{display:block !important;font-family:var(--mono);font-size:11px;color:#4a5a68;
@@ -434,6 +458,9 @@
         <tr><td>Version</td><td id="ab_ver">–</td></tr>
       </table>
       <p class="abnote">Cessna Citation 500 · JT15D-1 performance model.</p>
+      <!-- TEMP-CAMERA-TEST start -->
+      <button type="button" class="cambtn" data-go="camera" style="margin-top:12px;width:100%">Camera test (temporary)</button>
+      <!-- TEMP-CAMERA-TEST end -->
     </div>
     <div class="card">
       <h2>Developer</h2>
@@ -471,6 +498,52 @@
     <p class="abnote" style="margin-top:0">Planning tool. All figures are estimates for pre-flight planning only — the AFM and the official documentation prevail.</p>
   </div>
 </section>
+<!-- TEMP-CAMERA-TEST start -->
+<!-- ===================== CAMERA TEST (temporary — remove after the test) ===================== -->
+<section id="view-camera">
+  <p class="sub">Temporary test of photo and video capture in the installed app. Everything stays on this device — nothing is uploaded or sent anywhere.</p>
+
+  <div class="card about">
+    <h2>Capabilities</h2>
+    <table>
+      <tr><td>mediaDevices</td><td id="cam_c_md">–</td></tr>
+      <tr><td>MediaRecorder</td><td id="cam_c_mr">–</td></tr>
+      <tr><td>Share files</td><td id="cam_c_sh">–</td></tr>
+      <tr><td>Display mode</td><td id="cam_c_dm">–</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Native capture</h2>
+    <div class="camrow">
+      <button type="button" class="cambtn pri" id="cam_n_photo">Take photo</button>
+      <button type="button" class="cambtn pri" id="cam_n_video">Record video</button>
+    </div>
+    <input type="file" id="cam_in_photo" accept="image/*" capture="environment" hidden>
+    <input type="file" id="cam_in_video" accept="video/*" capture="environment" hidden>
+    <div id="cam_n_out"></div>
+  </div>
+
+  <div class="card">
+    <h2>Live camera (getUserMedia)</h2>
+    <div class="camrow">
+      <button type="button" class="cambtn pri" id="cam_start">Start camera</button>
+      <button type="button" class="cambtn" id="cam_switch" disabled>Switch camera</button>
+      <button type="button" class="cambtn" id="cam_stop" disabled>Stop</button>
+    </div>
+    <video id="cam_live" class="cammedia" autoplay muted playsinline hidden></video>
+    <div class="camrow" style="margin-top:8px">
+      <button type="button" class="cambtn" id="cam_snap" disabled>Snapshot</button>
+      <button type="button" class="cambtn" id="cam_rec" disabled>Record</button>
+    </div>
+    <div class="caminfo" id="cam_mr_note" hidden>MediaRecorder not available on this device</div>
+    <div id="cam_status"></div>
+    <canvas id="cam_canvas" hidden></canvas>
+    <div id="cam_snap_out"></div>
+    <div id="cam_rec_out"></div>
+  </div>
+</section>
+<!-- TEMP-CAMERA-TEST end -->
 
 <footer>
   SE-RII Flight Planner · Citation 500 (JT15D-1) · Great-circle distance + route factor · Typical climb/descent profiles; cruise from a model calibrated on the FL290 ★ + two flights at FL380/390 flight-verified, long-range above FL310 extrapolated · Weights: SE-RII BEW 7,324 lb (weighed 05 Jul 2024), MTOW 11,850 lb, MLW 11,350 lb, fuel 3,780 lb / 564 US gal · Planning tool — AFM and official navigation data prevail. · <a href="#about">About</a>
@@ -493,7 +566,7 @@
 // ================= APP IDENTITY =================
 // Release rule: version 1.N.x goes with the service-worker cache serii-planner-vN
 // (1.6.0 ↔ serii-planner-v6). When publishing, bump BOTH in the same commit.
-const APP={name:'SE-RII Flight Planner',version:'1.12.0',build:'2026-09-18',developer:'TI Systems',email:'info@tisystems.pt',repo:'https://github.com/danieltis/serii-planner'};
+const APP={name:'SE-RII Flight Planner',version:'1.13.0',build:'2026-09-30',developer:'TI Systems',email:'info@tisystems.pt',repo:'https://github.com/danieltis/serii-planner'};
 
 // ================= DATA =================
 // Original curated table — kept only as a fallback for codes that do not exist
@@ -1027,6 +1100,8 @@ function plan(){
 // ================= NAVIGATION (presentation — recalculates nothing) =================
 const VIEWS=['home','route','mass','fuel','perf','plan','about'];
 const VTITLE={home:'Home',route:'Route',mass:'Mass & limits',fuel:'Fuel & cruise',perf:'Performance',plan:'Flight plan',about:'About'};
+VIEWS.push('camera'); // TEMP-CAMERA-TEST
+VTITLE.camera='Camera test'; // TEMP-CAMERA-TEST
 
 // maps an alert's text to the section where the user fixes it
 function tagAlert(text){
@@ -1068,6 +1143,7 @@ function showView(v){
   if(v==='home')sb.style.display='none';
   else{sb.style.display='';document.getElementById('s_title').textContent=VTITLE[v]||'';}
   if(v==='about')renderAbout();
+  if(v==='camera')renderCamera();else camStopAll(); // TEMP-CAMERA-TEST
   try{localStorage.setItem('serii.view',v);}catch(e){}
 }
 function routeFromHash(scroll){
@@ -1150,6 +1226,212 @@ function abCheckUpdate(){
   }).catch(()=>abSet('ab_msg','Service worker not available'));
 }
 document.getElementById('ab_upd').addEventListener('click',abCheckUpdate);
+// TEMP-CAMERA-TEST start
+// ================= CAMERA TEST (temporary — remove after the test) =================
+// Checks whether the installed app can take photos and record video.
+// Everything stays local: blobs and object URLs only, nothing is uploaded.
+const CAM={stream:null,facing:'environment',pending:false,rec:null,chunks:[],mime:'',urls:{}};
+const CAM_MIMES=['video/mp4','video/webm;codecs=vp9','video/webm'];
+function camEl(id){return document.getElementById(id);}
+function camStatus(msg,bad){const el=camEl('cam_status');if(!el)return;el.textContent=msg||'';el.classList.toggle('bad',!!bad);}
+function camSize(n){return n>=1048576?(n/1048576).toFixed(2)+' MB':(n/1024).toFixed(1)+' KB';}
+function camStamp(){const d=new Date(),p=x=>String(x).padStart(2,'0');
+  return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());}
+function camExt(type,fallback){
+  const t=String(type||'').toLowerCase();
+  if(t.indexOf('jpeg')>=0||t.indexOf('jpg')>=0)return 'jpg';
+  if(t.indexOf('png')>=0)return 'png';
+  if(t.indexOf('heic')>=0)return 'heic';
+  if(t.indexOf('quicktime')>=0)return 'mov';
+  if(t.indexOf('mp4')>=0)return 'mp4';
+  if(t.indexOf('webm')>=0)return 'webm';
+  return fallback;
+}
+function camPickMime(){
+  if(!window.MediaRecorder||typeof MediaRecorder.isTypeSupported!=='function')return '';
+  for(const m of CAM_MIMES){try{if(MediaRecorder.isTypeSupported(m))return m;}catch(e){}}
+  return '';
+}
+function camErr(e){
+  const n=(e&&e.name)||'';
+  if(n==='NotAllowedError'||n==='PermissionDeniedError')return 'Permission denied (NotAllowedError) — allow camera and microphone for this app, then try again';
+  if(n==='NotFoundError'||n==='DevicesNotFoundError')return 'No camera or microphone found (NotFoundError)';
+  if(n==='NotReadableError'||n==='TrackStartError')return 'Camera busy or could not start (NotReadableError) — close other apps using it';
+  if(n==='OverconstrainedError')return 'Requested camera not available on this device (OverconstrainedError)';
+  if(n==='SecurityError')return 'Blocked by the browser (SecurityError) — the camera needs a secure https page';
+  if(n==='AbortError')return 'Camera start was interrupted (AbortError)';
+  return 'Error'+(n?' ('+n+')':'')+': '+((e&&e.message)||String(e));
+}
+function camCanShare(file){
+  try{return !!(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]}));}catch(e){return false;}
+}
+
+// shows a photo/video blob in a result slot (replacing and revoking the previous one) + "Save / share"
+function camShow(slot,blob,kind,saveName,label,extra){
+  const out=camEl(slot);if(!out)return;
+  if(CAM.urls[slot])URL.revokeObjectURL(CAM.urls[slot]);
+  const url=URL.createObjectURL(blob);CAM.urls[slot]=url;
+  const type=blob.type||(kind==='photo'?'image/jpeg':'video/mp4');
+  const file=new File([blob],saveName,{type:type});
+  out.innerHTML='';
+
+  const m=document.createElement(kind==='photo'?'img':'video');
+  m.className='cammedia';
+  if(kind==='photo')m.alt='Captured photo';
+  else{m.controls=true;m.playsInline=true;m.setAttribute('playsinline','');m.preload='metadata';}
+  m.src=url;
+  out.appendChild(m);
+
+  const info=document.createElement('div');info.className='caminfo';
+  info.textContent=[label||saveName,type,camSize(blob.size),extra].filter(Boolean).join(' · ');
+  out.appendChild(info);
+
+  const msg=document.createElement('div');msg.className='caminfo';
+  if(camCanShare(file)){
+    const b=document.createElement('button');b.type='button';b.className='cambtn camsave';b.textContent='Save / share';
+    b.addEventListener('click',()=>{
+      msg.textContent='';msg.classList.remove('bad');
+      navigator.share({files:[file]}).catch(e=>{
+        if(e&&e.name==='AbortError')return;   // share sheet dismissed
+        msg.textContent='Share failed: '+camErr(e);msg.classList.add('bad');
+      });
+    });
+    out.appendChild(b);
+  }else{
+    const a=document.createElement('a');a.className='cambtn camsave';a.textContent='Save / share';
+    a.href=url;a.download=saveName;
+    out.appendChild(a);
+    msg.textContent='If nothing happens, long-press the '+(kind==='photo'?'image':'video')+' to save';
+  }
+  out.appendChild(msg);
+}
+
+// ---- card 1: native capture (file input with capture) ----
+function camNative(input,kind){
+  const f=input.files&&input.files[0];
+  if(!f)return;
+  const name='serii-'+kind+'-'+camStamp()+'.'+camExt(f.type,kind==='photo'?'jpg':'mp4');
+  camShow('cam_n_out',f,kind,name,f.name||name);
+  input.value='';   // same choice again still fires "change"
+}
+
+// ---- card 2: live camera (getUserMedia + MediaRecorder) ----
+function camButtons(){
+  const on=!!CAM.stream,rec=!!(CAM.rec&&CAM.rec.state!=='inactive');
+  camEl('cam_start').disabled=CAM.pending||on;
+  camEl('cam_switch').disabled=CAM.pending||!on;
+  camEl('cam_stop').disabled=!on;
+  camEl('cam_snap').disabled=!on;
+  const r=camEl('cam_rec');
+  r.disabled=!on;
+  r.textContent=rec?'Stop recording':'Record';
+  r.classList.toggle('recon',rec);
+}
+function camStart(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    camStatus('Camera API not available (navigator.mediaDevices.getUserMedia is missing)',true);return;}
+  if(CAM.pending)return;
+  camStopStream();
+  CAM.pending=true;camButtons();
+  camStatus('Requesting camera ('+CAM.facing+')…');
+  navigator.mediaDevices.getUserMedia({video:{facingMode:CAM.facing},audio:true}).then(s=>{
+    CAM.pending=false;
+    const view=camEl('view-camera');
+    if(!view||!view.classList.contains('on')){s.getTracks().forEach(t=>t.stop());camButtons();return;} // left the view meanwhile
+    CAM.stream=s;
+    const v=camEl('cam_live');
+    v.muted=true;v.srcObject=s;v.hidden=false;
+    const p=v.play();if(p&&p.catch)p.catch(()=>{});
+    const vt=s.getVideoTracks()[0];
+    const st=(vt&&vt.getSettings)?vt.getSettings():{};
+    camStatus('Camera on — '+CAM.facing+(st.width?' · '+st.width+'×'+st.height:'')+
+      ' · audio '+(s.getAudioTracks().length?'yes':'no'));
+    camButtons();
+  }).catch(e=>{CAM.pending=false;camStatus(camErr(e),true);camButtons();});
+}
+function camStopStream(){
+  if(CAM.rec&&CAM.rec.state!=='inactive'){try{CAM.rec.stop();}catch(e){}}
+  if(CAM.stream){CAM.stream.getTracks().forEach(t=>t.stop());CAM.stream=null;}
+  const v=camEl('cam_live');
+  if(v){v.srcObject=null;v.hidden=true;}
+  camButtons();
+}
+function camStopAll(){   // called by showView when leaving the camera view
+  if(!CAM.stream&&!CAM.rec)return;
+  camStopStream();
+  camStatus('Camera stopped');
+}
+function camSwitch(){
+  CAM.facing=CAM.facing==='environment'?'user':'environment';
+  if(CAM.stream)camStart();
+}
+function camSnap(){
+  const v=camEl('cam_live');
+  if(!CAM.stream||!v.videoWidth){camStatus('No video frame yet — wait a moment and try again',true);return;}
+  const c=camEl('cam_canvas');
+  c.width=v.videoWidth;c.height=v.videoHeight;
+  c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+  c.toBlob(b=>{
+    if(!b){camStatus('Snapshot failed (the canvas returned no image)',true);return;}
+    const dims=c.width+'×'+c.height;
+    camShow('cam_snap_out',b,'photo','serii-photo-'+camStamp()+'.jpg','',dims);
+    camStatus('Snapshot '+dims+' · '+camSize(b.size));
+  },'image/jpeg',0.9);
+}
+function camRecToggle(){
+  if(CAM.rec&&CAM.rec.state!=='inactive'){CAM.rec.stop();return;}
+  if(!CAM.stream){camStatus('Start the camera first',true);return;}
+  if(!window.MediaRecorder){camStatus('MediaRecorder not available on this device',true);return;}
+  let r;
+  try{r=CAM.mime?new MediaRecorder(CAM.stream,{mimeType:CAM.mime}):new MediaRecorder(CAM.stream);}
+  catch(e){camStatus('Recorder could not start — '+camErr(e),true);return;}
+  const t0=Date.now();
+  CAM.chunks=[];CAM.rec=r;
+  r.ondataavailable=e=>{if(e.data&&e.data.size)CAM.chunks.push(e.data);};
+  r.onerror=e=>{camStatus('Recording error — '+camErr((e&&e.error)||e),true);};
+  r.onstop=()=>{
+    const type=r.mimeType||CAM.mime||'video/mp4';
+    const blob=new Blob(CAM.chunks,{type:type.split(';')[0]});
+    CAM.chunks=[];
+    if(CAM.rec===r)CAM.rec=null;
+    camButtons();
+    if(!blob.size){camStatus('Recording produced no data',true);return;}
+    const secs=((Date.now()-t0)/1000).toFixed(1)+' s';
+    camShow('cam_rec_out',blob,'video','serii-video-'+camStamp()+'.'+camExt(type,'mp4'),'',secs);
+    camStatus('Recorded '+secs+' · '+camSize(blob.size)+' · '+type);
+  };
+  try{r.start(1000);}
+  catch(e){CAM.rec=null;camStatus('Recorder could not start — '+camErr(e),true);camButtons();return;}
+  camStatus('Recording… ('+(r.mimeType||CAM.mime||'browser default type')+')');
+  camButtons();
+}
+
+// capabilities, filled every time the view opens
+function renderCamera(){
+  const md=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);
+  abSet('cam_c_md',md?'yes':'no'+(window.isSecureContext===false?' (page is not a secure context)':''));
+  const hasMR=!!window.MediaRecorder;
+  CAM.mime=camPickMime();
+  abSet('cam_c_mr',hasMR?'yes · '+(CAM.mime||'none of mp4/webm reported — browser default'):'no');
+  const sh=camCanShare(new File(['x'],'serii-test.jpg',{type:'image/jpeg'}));
+  abSet('cam_c_sh',sh?'yes':'no'+(navigator.share?' (text/links only)':''));
+  const standalone=(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+  abSet('cam_c_dm',standalone?'installed app (standalone)':'browser tab');
+  camEl('cam_rec').hidden=!hasMR;
+  camEl('cam_mr_note').hidden=hasMR;
+  camButtons();
+}
+
+camEl('cam_n_photo').addEventListener('click',()=>camEl('cam_in_photo').click());
+camEl('cam_n_video').addEventListener('click',()=>camEl('cam_in_video').click());
+camEl('cam_in_photo').addEventListener('change',e=>camNative(e.target,'photo'));
+camEl('cam_in_video').addEventListener('change',e=>camNative(e.target,'video'));
+camEl('cam_start').addEventListener('click',camStart);
+camEl('cam_switch').addEventListener('click',camSwitch);
+camEl('cam_stop').addEventListener('click',()=>{camStopStream();camStatus('Camera stopped');});
+camEl('cam_snap').addEventListener('click',camSnap);
+camEl('cam_rec').addEventListener('click',camRecToggle);
+// TEMP-CAMERA-TEST end
 
 // performance sub-tabs
 function showPerf(t){
